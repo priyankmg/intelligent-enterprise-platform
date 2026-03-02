@@ -23,5 +23,26 @@ Basic architecture of the platform:
 The HR user can view employee attributes based on their access and perform actions based on their access.
 Each system's data is housed within micro-front ends that each domain/system team owns and maintains since they are specialists in knowing what data and how their users want to use it.
 
-The employee facing UX allows employee to see their data - all their history from various systems, reachh out to HR or support for help with anything or track open cases / requests. 
+The employee facing UX allows employee to see their data - all their history from various systems, reachh out to HR or support for help with anything or track open cases / requests.
+
+---
+
+## Running the platform
+
+This repo implements the above architecture with a **Next.js** app (TypeScript, Tailwind).
+
+- **Data layer:** `src/data-layer/` — types and mock data for all seven systems of record (Employee Master, Leave & Attendance, Disability & Accommodations, Performance & Feedback, HR Cases, Training, Policy Central) plus IAM user groups.
+- **Abstraction layer:** `src/abstraction-layer/iam.ts` — permission checks; `src/app/api/` — REST APIs for employees, leave, accommodations, performance, cases, training, policies, dashboard tasks, and HR summary. All API routes enforce IAM (e.g. Managers read-only performance; HR read accommodations without medical docs; Case Managers full CRUD on accommodations).
+- **User experience:** Dashboard (my tasks, HR summary: present today / low leave / terminated), Employees list with filters, Employee profile (aggregated data per system in separate sections, micro-frontend style), My profile (employee self-service), Policy Central.
+
+**Commands:**
+
+```bash
+npm install
+npm run dev    # http://localhost:3000
+npm run build
+npm start      # production
+```
+
+**Mock user:** The app uses a single mock session user (Jordan Lee, `emp-2`) with roles `manager` and `hr` and groups Managers + HR, so dashboard and employee views show HR summary and full employee profile data.
 

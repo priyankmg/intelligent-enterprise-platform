@@ -1,0 +1,13 @@
+.DS_Store
+node_modules
+.next
+.env*
+
+# Editor
+.vscode
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
