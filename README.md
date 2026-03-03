@@ -46,3 +46,16 @@ npm start      # production
 
 **Mock user:** The app uses a single mock session user (Jordan Lee, `emp-2`) with roles `manager` and `hr` and groups Managers + HR, so dashboard and employee views show HR summary and full employee profile data.
 
+### Termination investigation workflow
+
+1. **Investigation case** (`case-inv-1`): Colleague complaint — employee (Alex Chen) allegedly took pictures in confidential restricted office. HR interviewed witnesses, obtained security footage, documented notes. Initial finding: employee was seen using phone.
+2. **Initiate termination review**: From the investigation case, HR clicks "Initiate termination review" → opens the termination review UX.
+3. **Data aggregation service** (`src/services/data-aggregation.ts`): On load, pulls an employee snapshot from all systems (Employee Master, Leave, Performance, Training, Cases, Policies) as of the incident date.
+4. **Three agents** (orchestrated by `POST /api/cases/[id]/termination-review/analyze`):
+   - **Semantic Layer Agent** (`src/agents/semantic-layer-agent.ts`): Looks up policy metadata (definitions, clause semantics, how-to-infer rules) from `src/data-layer/policy-metadata.ts` so the Policy Evaluation Agent infers the policy correctly.
+   - **Policy Evaluation Agent** (`src/agents/policy-evaluation-agent.ts`): Calls the Semantic Layer Agent, then reads the termination policy and checks whether the employee snapshot and case show a policy violation. Outputs the **applied policy clause** (e.g. `restricted-area-device`, `restricted-area-photography`) and violation result.
+   - **Retrieval Augmentation Agent** (`src/agents/retrieval-augmentation-agent.ts`): Takes the applied policy clause from the Policy Evaluation Agent and uses the **cases retrieval service** (`src/services/cases-retrieval.ts`) to retrieve past termination cases where the same policy was applied. No LLM; uses data aggregation / case store.
+5. **Synthesis**: The analyze API combines policy evaluation + similar cases into a single recommendation (terminate / warning / insufficient evidence), summary, evidence, and mitigating factors for HR.
+6. **HR decision**: HR reviews the recommendation, policy evaluation, similar cases, and employee snapshot, then submits formal termination with reason and rehire consequence.
+
+**AI:** Set `OPENAI_API_KEY` in `.env` for live GPT in Semantic Layer, Policy Evaluation, and synthesis. When unset, mock results are returned.

@@ -6,6 +6,7 @@ import type {
   AccommodationCase,
   PerformanceReview,
   HRCase,
+  CaseNote,
   Training,
   EmployeeTraining,
   Policy,
@@ -49,6 +50,44 @@ export const employees: EmployeeMaster[] = [
     teamHistory: [{ from: "2022-01-10", to: "2025-01-20", team: "Engineering", managerId: "emp-2" }],
     benefitsHistory: [{ effectiveDate: "2022-01-10", plan: "Standard" }],
   },
+  {
+    id: "emp-4",
+    name: "Morgan Taylor",
+    email: "morgan.taylor@company.com",
+    dateOfHire: "2020-08-01",
+    dateOfTermination: "2024-09-15",
+    team: "Engineering",
+    managerId: "emp-2",
+    level: "L4",
+    workLocation: "HQ",
+    teamHistory: [{ from: "2020-08-01", to: "2024-09-15", team: "Engineering", managerId: "emp-2" }],
+    benefitsHistory: [{ effectiveDate: "2020-08-01", plan: "Standard" }],
+  },
+  {
+    id: "emp-5",
+    name: "Casey Kim",
+    email: "casey.kim@company.com",
+    dateOfHire: "2021-11-15",
+    dateOfTermination: "2024-06-20",
+    team: "Operations",
+    level: "L3",
+    workLocation: "HQ",
+    teamHistory: [{ from: "2021-11-15", to: "2024-06-20", team: "Operations" }],
+    benefitsHistory: [{ effectiveDate: "2021-11-15", plan: "Standard" }],
+  },
+  {
+    id: "emp-6",
+    name: "Riley Johnson",
+    email: "riley.johnson@company.com",
+    dateOfHire: "2019-04-01",
+    dateOfTermination: "2024-03-10",
+    team: "Product",
+    managerId: "emp-2",
+    level: "L5",
+    workLocation: "HQ",
+    teamHistory: [{ from: "2019-04-01", to: "2024-03-10", team: "Product", managerId: "emp-2" }],
+    benefitsHistory: [{ effectiveDate: "2019-04-01", plan: "Premium" }],
+  },
 ];
 
 export const leaveBalances: Record<string, LeaveBalance[]> = {
@@ -60,6 +99,18 @@ export const leaveBalances: Record<string, LeaveBalance[]> = {
   "emp-2": [
     { employeeId: "emp-2", type: "sick", balance: 56, unit: "hours", accrued: 56, used: 0 },
     { employeeId: "emp-2", type: "paid", balance: 120, unit: "hours", accrued: 120, used: 0 },
+  ],
+  "emp-4": [
+    { employeeId: "emp-4", type: "sick", balance: 24, unit: "hours", accrued: 48, used: 24 },
+    { employeeId: "emp-4", type: "paid", balance: 40, unit: "hours", accrued: 96, used: 56 },
+  ],
+  "emp-5": [
+    { employeeId: "emp-5", type: "sick", balance: 32, unit: "hours", accrued: 48, used: 16 },
+    { employeeId: "emp-5", type: "paid", balance: 64, unit: "hours", accrued: 96, used: 32 },
+  ],
+  "emp-6": [
+    { employeeId: "emp-6", type: "sick", balance: 48, unit: "hours", accrued: 56, used: 8 },
+    { employeeId: "emp-6", type: "paid", balance: 80, unit: "hours", accrued: 120, used: 40 },
   ],
 };
 
@@ -112,6 +163,30 @@ export const performanceReviews: PerformanceReview[] = [
     finalDecision: "Exceeds",
     compensationChange: "5% merit",
   },
+  {
+    id: "perf-4",
+    employeeId: "emp-4",
+    cycle: "2023",
+    managerRating: 3,
+    finalDecision: "Meets",
+    compensationChange: "3% merit",
+  },
+  {
+    id: "perf-5",
+    employeeId: "emp-5",
+    cycle: "2023",
+    managerRating: 2,
+    finalDecision: "Needs Improvement",
+    compensationChange: "0%",
+  },
+  {
+    id: "perf-6",
+    employeeId: "emp-6",
+    cycle: "2023",
+    managerRating: 4,
+    finalDecision: "Exceeds",
+    compensationChange: "5% merit",
+  },
 ];
 
 export const hrCases: HRCase[] = [
@@ -133,6 +208,145 @@ export const hrCases: HRCase[] = [
     createdAt: "2025-01-18T00:00:00Z",
     assignedTo: "hr-1",
   },
+  // Present investigation: colleague complaint - photos in restricted area
+  {
+    id: "case-inv-1",
+    employeeId: "emp-1",
+    type: "investigation",
+    subject: "Alleged policy violation: taking pictures in confidential restricted office space",
+    status: "in_progress",
+    createdAt: "2025-02-15T09:00:00Z",
+    assignedTo: "hr-1",
+    incidentDate: "2025-02-14",
+    initialFinding:
+      "Employee was seen using phone in restricted area. Security footage confirms device usage. Colleague reported employee may have been taking photos of confidential materials.",
+    caseNotes: [
+      {
+        id: "n1",
+        authorId: "hr-1",
+        authorName: "HR Team",
+        type: "interview",
+        content:
+          "Interviewed 3 colleagues present in area. Two confirmed seeing employee with phone out. One stated employee appeared to be taking photos of whiteboard.",
+        createdAt: "2025-02-16T10:00:00Z",
+      },
+      {
+        id: "n2",
+        authorId: "hr-1",
+        authorName: "HR Team",
+        type: "evidence",
+        content:
+          "Security footage obtained from Security team. Footage shows employee holding phone in horizontal orientation (camera mode) pointed at whiteboard in restricted zone B-204. Timestamp: 2025-02-14 14:32.",
+        createdAt: "2025-02-17T11:00:00Z",
+      },
+      {
+        id: "n3",
+        authorId: "hr-1",
+        authorName: "HR Team",
+        type: "discussion",
+        content:
+          "Discussion with employee (Alex Chen). Employee acknowledged having phone in restricted area but stated they were checking messages, not taking photos. Employee expressed regret and stated they were unaware of strict no-device policy in that zone.",
+        createdAt: "2025-02-18T14:00:00Z",
+      },
+      {
+        id: "n4",
+        authorId: "hr-1",
+        authorName: "HR Team",
+        type: "finding",
+        content:
+          "Initial finding: Employee was seen using phone in restricted area. Security footage supports device usage. Employee's explanation (checking messages) conflicts with witness account of photo-taking. Policy clearly states no personal devices in restricted zones. Awaiting termination review decision.",
+        createdAt: "2025-02-20T09:00:00Z",
+      },
+    ],
+  },
+  // Termination review case (initiated from case-inv-1) - HR must review snapshot + AI before submitting
+  {
+    id: "case-term-review-1",
+    employeeId: "emp-1",
+    type: "termination",
+    subject: "Termination review: Policy violation - device/photography in restricted area",
+    status: "in_progress",
+    createdAt: "2025-02-21T10:00:00Z",
+    assignedTo: "hr-1",
+    parentCaseId: "case-inv-1",
+    incidentDate: "2025-02-14",
+    initialFinding:
+      "Employee was seen using phone in restricted area. Security footage confirms device usage. Colleague reported employee may have been taking photos of confidential materials.",
+    caseNotes: [], // inherits context from parent; HR adds notes when submitting
+  },
+  // Past termination cases (for RAG) - same reason: photos/device in restricted area
+  {
+    id: "case-term-past-1",
+    employeeId: "emp-4",
+    type: "termination",
+    subject: "Termination: Unauthorized photography in restricted area",
+    status: "resolved",
+    createdAt: "2024-09-01T00:00:00Z",
+    assignedTo: "hr-1",
+    incidentDate: "2024-08-28",
+    initialFinding: "Employee photographed confidential documents in restricted zone.",
+    terminationReason: "Severe policy violation - photography of confidential materials in restricted area. Zero tolerance.",
+    rehireEligible: false,
+    appliedPolicyClauseId: "restricted-area-photography",
+    caseNotes: [
+      {
+        id: "pn1",
+        authorId: "hr-1",
+        authorName: "HR Team",
+        type: "finding",
+        content: "Security footage confirmed photography. Documents were classified. Immediate termination recommended.",
+        createdAt: "2024-08-30T00:00:00Z",
+      },
+    ],
+  },
+  {
+    id: "case-term-past-2",
+    employeeId: "emp-5",
+    type: "termination",
+    subject: "Termination: Phone usage and suspected photography in restricted zone",
+    status: "resolved",
+    createdAt: "2024-06-05T00:00:00Z",
+    assignedTo: "hr-1",
+    incidentDate: "2024-06-03",
+    initialFinding: "Employee seen with phone in restricted area. Witness reported possible photo-taking.",
+    terminationReason: "Policy violation - device in restricted zone. Prior written warning on same policy. Escalation to termination.",
+    rehireEligible: true,
+    appliedPolicyClauseId: "restricted-area-second-offense",
+    caseNotes: [
+      {
+        id: "pn2",
+        authorId: "hr-1",
+        authorName: "HR Team",
+        type: "finding",
+        content: "Second offense. First warning issued 3 months prior for same policy. Termination approved.",
+        createdAt: "2024-06-04T00:00:00Z",
+      },
+    ],
+  },
+  {
+    id: "case-term-past-3",
+    employeeId: "emp-6",
+    type: "termination",
+    subject: "Termination: Unauthorized device in restricted area - photo evidence",
+    status: "resolved",
+    createdAt: "2024-03-01T00:00:00Z",
+    assignedTo: "hr-1",
+    incidentDate: "2024-02-28",
+    initialFinding: "Employee used phone to photograph whiteboard in restricted meeting room.",
+    terminationReason: "Severe breach - photography of proprietary information. No prior violations but severity warrants termination.",
+    rehireEligible: false,
+    appliedPolicyClauseId: "restricted-area-photography",
+    caseNotes: [
+      {
+        id: "pn3",
+        authorId: "hr-1",
+        authorName: "HR Team",
+        type: "finding",
+        content: "Clear evidence from security. Employee admitted to taking photo. Confidential content on whiteboard.",
+        createdAt: "2024-02-29T00:00:00Z",
+      },
+    ],
+  },
 ];
 
 export const trainings: Training[] = [
@@ -143,6 +357,9 @@ export const trainings: Training[] = [
 export const employeeTrainings: EmployeeTraining[] = [
   { employeeId: "emp-1", trainingId: "tr-1", status: "completed", completedAt: "2025-01-15" },
   { employeeId: "emp-1", trainingId: "tr-2", status: "in_progress" },
+  { employeeId: "emp-4", trainingId: "tr-1", status: "completed", completedAt: "2023-06-01" },
+  { employeeId: "emp-5", trainingId: "tr-1", status: "completed", completedAt: "2022-03-15" },
+  { employeeId: "emp-6", trainingId: "tr-1", status: "completed", completedAt: "2020-05-01" },
 ];
 
 export const policies: Policy[] = [
@@ -161,6 +378,33 @@ export const policies: Policy[] = [
     effectiveDate: "2024-01-01",
     body: "Annual review cycle. Self-input, manager rating, calibration, final decision and compensation.",
     category: "performance",
+  },
+  {
+    id: "pol-termination",
+    name: "Employee Termination Policy",
+    version: "1.0",
+    effectiveDate: "2024-01-01",
+    body: `EMPLOYEE TERMINATION POLICY
+
+1. GROUNDS FOR TERMINATION
+Termination may result from: performance issues, policy violations, misconduct, or redundancy.
+
+2. RESTRICTED AREA & CONFIDENTIALITY VIOLATIONS
+- No personal devices (phones, cameras, smartwatches) permitted in designated restricted zones (e.g., B-200 series, confidential meeting rooms).
+- Photography, recording, or transmission of confidential/proprietary information is strictly prohibited.
+- Violations are categorized by severity:
+  - First offense (minor): Written warning, mandatory retraining.
+  - First offense (severe): Termination. Severe = photography of documents/screens, intentional breach.
+  - Second offense (any): Termination. Prior warning on same policy escalates to termination.
+- Rehire eligibility: Severe breaches (photography of confidential materials) = not eligible for rehire. Lesser violations may be eligible after 12 months.
+
+3. TERMINATION REVIEW PROCESS
+Before submitting formal termination, HR must:
+- Review employee data snapshot (performance, attendance, prior cases, training compliance).
+- Consider manager and stakeholder feedback.
+- Document evidence and policy alignment.
+- Submit termination with stated reason and rehire consequence.`,
+    category: "termination",
   },
 ];
 
@@ -181,6 +425,7 @@ export const userGroups: UserGroup[] = [
       { system: "leave", operation: "read" },
       { system: "accommodations", operation: "read", attributeScope: "no_medical" },
       { system: "cases", operation: "read" },
+      { system: "cases", operation: "write" },
       { system: "performance", operation: "read" },
       { system: "policy", operation: "read" },
     ],

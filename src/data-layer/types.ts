@@ -73,14 +73,31 @@ export interface Feedback {
 }
 
 // 1.5 Employee Investigation and Cases
+export interface CaseNote {
+  id: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+  type?: "interview" | "evidence" | "discussion" | "finding";
+}
+
 export interface HRCase {
   id: string;
   employeeId: string;
-  type: "query" | "policy" | "safety" | "investigation";
+  type: "query" | "policy" | "safety" | "investigation" | "termination";
   subject: string;
   status: "open" | "in_progress" | "resolved";
   createdAt: string;
   assignedTo?: string;
+  // Investigation / termination fields
+  incidentDate?: string;
+  initialFinding?: string;
+  parentCaseId?: string; // termination case links to investigation
+  caseNotes?: CaseNote[];
+  terminationReason?: string; // set when HR submits formal termination
+  rehireEligible?: boolean;
+  appliedPolicyClauseId?: string; // for RAG: which policy clause was applied (e.g. restricted-area-device)
 }
 
 // 1.6 Training
@@ -127,4 +144,70 @@ export interface SessionUser {
   employeeId: string;
   roles: Role[];
   groupIds: string[];
+}
+
+// Data aggregation snapshot (as of incident date)
+export interface EmployeeSnapshot {
+  snapshotDate: string;
+  employee: EmployeeMaster;
+  leave: { balances: LeaveBalance[]; records: LeaveRecord[] };
+  attendance: AttendanceRecord[];
+  accommodations: AccommodationCase[];
+  performance: PerformanceReview[];
+  cases: HRCase[];
+  training: { training: Training; status: string }[];
+  policies: Policy[];
+}
+
+// Policy metadata (for Semantic Layer Agent)
+export interface PolicyClauseMetadata {
+  id: string;
+  name: string;
+  description: string;
+  severityLevel: "first_offense_minor" | "first_offense_severe" | "second_offense";
+  howToInferFromSnapshot: string;
+  rehireEligibilityRule: string;
+}
+
+export interface PolicyMetadata {
+  policyId: string;
+  policyName: string;
+  effectiveDate: string;
+  clauses: PolicyClauseMetadata[];
+  definitions: Record<string, string>;
+}
+
+// Policy Evaluation Agent output
+export interface PolicyEvaluationResult {
+  appliedPolicyId: string;
+  appliedClauseId: string;
+  appliedClauseName: string;
+  violated: boolean;
+  evidence: string[];
+  policyViolations: string[];
+  inferredCorrectly: boolean;
+  semanticLayerSummary?: string;
+}
+
+// Retrieval Augmentation Agent output
+export interface SimilarCase {
+  caseId: string;
+  employeeId: string;
+  subject: string;
+  terminationReason: string;
+  rehireEligible: boolean;
+  appliedClauseId: string;
+  similarity: string;
+}
+
+// AI agent recommendation for termination review (combined)
+export interface TerminationRecommendation {
+  recommendation: "recommend_termination" | "recommend_warning" | "insufficient_evidence";
+  summary: string;
+  evidence: string[];
+  policyViolations: string[];
+  mitigatingFactors: string[];
+  similarCases: SimilarCase[];
+  policyEvaluation: PolicyEvaluationResult;
+  semanticLayerSummary?: string;
 }

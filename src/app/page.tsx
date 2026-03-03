@@ -138,6 +138,12 @@ export default function DashboardPage() {
               Browse employees
             </Link>
             <Link
+              href="/cases"
+              className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90"
+            >
+              Cases & investigations
+            </Link>
+            <Link
               href="/profile"
               className="px-4 py-2 rounded border border-[var(--border)] hover:bg-[var(--surface)]"
             >

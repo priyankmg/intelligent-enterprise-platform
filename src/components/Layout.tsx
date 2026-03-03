@@ -20,6 +20,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/policies" className="text-[var(--muted)] hover:text-[var(--text)]">
               Policies
             </Link>
+            <Link href="/cases" className="text-[var(--muted)] hover:text-[var(--text)]">
+              Cases
+            </Link>
           </nav>
         </div>
       </header>
