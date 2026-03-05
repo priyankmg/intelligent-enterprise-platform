@@ -39,12 +39,15 @@ The employee facing UX allows employee to see their data - all their history fro
 
 ## AI agents
 
-This platform includes **6 AI agents**, grouped into two planes:
+This platform includes **7 AI agents**, grouped into two planes:
 
 **Business plane (3 agents)**  
 - **Semantic Layer Agent** — Supplies policy metadata (definitions, clause semantics, inference rules) so the Policy Evaluation Agent interprets policies correctly. Used in the termination investigation workflow.  
 - **Policy Evaluation Agent** — Evaluates employee snapshot and case against the termination policy; outputs applied clause and violation result.  
 - **Retrieval Augmentation Agent** — Uses the applied policy clause to retrieve past similar termination cases and ground the recommendation.
+
+**Career trajectory classifier**  
+- **Career Trajectory Agent** — Predicts whether an employee is trending toward growth (promotion, high performance) or termination risk. Uses a k-NN classifier over job-relevant snapshots (tenure, leave balance, performance ratings, HR cases, training completion, level). **The model explicitly does not use protected characteristics** such as age, gender, race, ethnicity, sexual orientation, religion, disability status, marital status, or nationality. Only performance-related and job-relevant signals are included in the snapshot and prediction. See [Career trajectory classifier](#career-trajectory-classifier) below.
 
 **Tech plane (3 agents)**  
 - **API healing** — Monitors API calls to systems of record; when payload or response contract changes, analyzes the failure, updates the data contract, retries, and creates engineering or FYI tickets.  
@@ -60,8 +63,8 @@ All agents are orchestrated or triggered from the abstraction and UX layers; tec
 This repo implements the above architecture with a **Next.js 15** app (TypeScript, Tailwind, React 19).
 
 - **Data layer:** `src/data-layer/` — types and mock data for all seven systems of record (Employee Master, Leave & Attendance, Disability & Accommodations, Performance & Feedback, HR Cases, Training, Policy Central) plus IAM user groups. Employee records include address and personal details (phone, DOB, nationality, marital status, emergency contact).
-- **Abstraction layer:** `src/abstraction-layer/iam.ts` — permission checks; `src/app/api/` — REST APIs for employees, leave, accommodations, performance, cases, training, policies, dashboard tasks, HR summary, and assistant chat. All API routes enforce IAM.
-- **User experience:** Dashboard (my tasks, HR summary: present today / low leave / terminated), Employees list with filters, Employee profile (aggregated data per system, address and personal details), My profile (employee self-service), Policy Central, Cases (investigations and termination reviews), **Tech agents** (API healing, Database monitoring, Pipeline healing), Profile. An **AI Assistant** chat (floating button) lets users ask employee counts, low leave balance, present today, terminated count, and trigger simulate API healing or database monitoring.
+- **Abstraction layer:** `src/abstraction-layer/iam.ts` — permission checks; `src/app/api/` — REST APIs for employees, leave, accommodations, performance, cases, training, policies, dashboard tasks, HR summary, career trajectory (`GET /api/employees/[id]/career-trajectory`), and assistant chat. All API routes enforce IAM.
+- **User experience:** Dashboard (my tasks, HR summary: present today / low leave / terminated), Employees list with filters, Employee profile (aggregated data per system, address and personal details, **Career trajectory** section with “View career trajectory recommendation” and a disclaimer that the outcome is data-driven but an AI prediction and does not use protected characteristics), My profile (employee self-service), Policy Central, Cases (investigations and termination reviews), **Tech agents** (API healing, Database monitoring, Pipeline healing), Profile. An **AI Assistant** chat (floating button) lets users ask employee counts, low leave balance, present today, terminated count, and trigger simulate API healing or database monitoring.
 - **Persistence:** Tech-agent cases (API healing, database monitoring, pipeline healing), failures, and tickets are stored under the `data/` directory as JSON files and persist across restarts and refresh.
 
 **Commands:**
@@ -90,6 +93,23 @@ If you see "This page isn't working" or HTTP 404, make sure you are opening the 
 6. **HR decision**: HR reviews the recommendation, policy evaluation, similar cases, and employee snapshot, then submits formal termination with reason and rehire consequence.
 
 **AI:** Set `OPENAI_API_KEY` in `.env` for live GPT in Semantic Layer, Policy Evaluation, and synthesis. When unset, mock results are returned.
+
+### Career trajectory classifier
+
+From an employee profile, **View career trajectory recommendation** builds a snapshot of the employee (tenure, leave balance, average manager rating, performance trend, HR case counts, training completion, level) and runs a k-NN classifier against reference snapshots of past employees who had growth (promotion, high performance) vs termination outcomes. The result is a trend (growth / termination / neutral), confidence, summary, and contributing factors. Each factor is **grounded in data**: the UI shows actual numbers (e.g. “2.0/5 avg”, “12 hours” leave balance) and links to the corresponding HR/investigation cases where applicable. A **disclaimer** under the outcome states that the recommendation is data-driven but remains an AI prediction and that the model does not take into account any protected characteristics.
+
+**Fairness and protected characteristics:** The snapshot and model **do not use any protected characteristics**. Specifically excluded from the feature set are: age, gender, race, ethnicity, sexual orientation, religion, disability status, marital status, nationality, and any other legally protected attributes. Only job-relevant, performance-related signals are used so predictions are based on work-related factors only.
+
+**Components and types:**
+
+- **Types** (`src/data-layer/types.ts`): `CareerSnapshot` (feature vector; no protected attributes), `CareerTrajectoryResult` (trend, confidence, summary, factors, `factorItems`, snapshot), `CareerTrajectoryFactor` (label, optional `caseIds`, optional `value` for grounding).
+- **Snapshot service** (`src/services/career-snapshot-service.ts`): Builds `CareerSnapshot` from Employee Master (tenure, level only), Leave, Performance, HR Cases, Training.
+- **Agent** (`src/agents/career-trajectory-agent.ts`): k-NN (k=5) over growth/termination reference snapshots; outputs trend, confidence, summary, and `factorItems` with labels and values (case IDs added by the API).
+- **API:** `GET /api/employees/[id]/career-trajectory` (same IAM as employee read). Enriches factor items with case IDs from `hrCases` for “Investigation or termination-related cases”.
+- **Reference data** (`src/data-layer/career-snapshot-data.ts`): Growth and termination snapshot lists plus canonical “good” and “bad” reference snapshots; no protected attributes.
+- **UX** (`src/app/employees/[id]/page.tsx`): Career trajectory section with button, result card (trend, confidence, summary, factor list with values and “View case” / “View N cases” links), and disclaimer.
+
+**Sample data:** The mock dataset includes additional employees (e.g. emp-7–emp-11) and a **termination-risk profile** for the mock user **Jordan Lee** (emp-2): low leave balance, a recent “Does not meet” performance review (2025-Q1), and an ongoing investigation case (`case-inv-2`, performance and quality-of-work concerns). Viewing Jordan’s profile and running the recommendation illustrates a termination-risk outcome with grounded factors and case links.
 
 ### Self-Healing Agent
 

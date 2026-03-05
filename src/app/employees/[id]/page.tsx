@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Layout } from "@/components/Layout";
 import Link from "next/link";
-import type { EmployeeMaster, LeaveBalance, LeaveRecord, AccommodationCase, PerformanceReview, HRCase } from "@/data-layer/types";
+import type { EmployeeMaster, LeaveBalance, LeaveRecord, AccommodationCase, PerformanceReview, HRCase, CareerTrajectoryResult } from "@/data-layer/types";
 
 interface LeaveData {
   balances: LeaveBalance[];
@@ -27,6 +27,25 @@ export default function EmployeeProfilePage() {
   const [performance, setPerformance] = useState<PerformanceReview[]>([]);
   const [cases, setCases] = useState<HRCase[]>([]);
   const [training, setTraining] = useState<TrainingItem[]>([]);
+  const [trajectory, setTrajectory] = useState<CareerTrajectoryResult | null>(null);
+  const [trajectoryLoading, setTrajectoryLoading] = useState(false);
+  const [trajectoryError, setTrajectoryError] = useState<string | null>(null);
+
+  const fetchTrajectory = () => {
+    if (!id) return;
+    setTrajectoryLoading(true);
+    setTrajectoryError(null);
+    fetch(`/api/employees/${id}/career-trajectory`)
+      .then((r) => {
+        if (!r.ok) throw new Error(r.status === 404 ? "Employee not found" : "Failed to load");
+        return r.json();
+      })
+      .then((data) => {
+        setTrajectory(data as CareerTrajectoryResult);
+      })
+      .catch((e) => setTrajectoryError(e.message))
+      .finally(() => setTrajectoryLoading(false));
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -79,6 +98,70 @@ export default function EmployeeProfilePage() {
             )}
           </div>
         </header>
+
+        <section className="card p-6">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">Career trajectory</h2>
+          <p className="text-sm text-[var(--muted)] mb-4">
+            Compare this employee&apos;s snapshot (performance, leave, cases, training) to past growth and termination patterns.
+          </p>
+          <button
+            type="button"
+            onClick={fetchTrajectory}
+            disabled={trajectoryLoading}
+            className="btn-primary"
+          >
+            {trajectoryLoading ? "Analyzing…" : "View career trajectory recommendation"}
+          </button>
+          {trajectoryError && (
+            <p className="mt-3 text-sm text-[var(--danger)]">{trajectoryError}</p>
+          )}
+          {trajectory && !trajectoryLoading && (
+            <div className="mt-6 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)]">
+              <div className="flex items-center gap-2 mb-3">
+                <span
+                  className={
+                    trajectory.trend === "growth"
+                      ? "text-[var(--success)] font-semibold"
+                      : trajectory.trend === "termination"
+                        ? "text-[var(--danger)] font-semibold"
+                        : "text-[var(--muted)] font-semibold"
+                  }
+                >
+                  {trajectory.trend === "growth" ? "Trending toward growth" : trajectory.trend === "termination" ? "Trending toward termination risk" : "Neutral"}
+                </span>
+                <span className="text-sm text-[var(--muted)]">
+                  ({(Math.round(trajectory.confidence * 100))}% confidence)
+                </span>
+              </div>
+              <p className="text-sm text-[var(--text-secondary)] mb-3">{trajectory.summary}</p>
+              {trajectory.factorItems && trajectory.factorItems.length > 0 && (
+                <ul className="text-sm text-[var(--text-secondary)] list-disc list-inside space-y-1">
+                  {trajectory.factorItems.map((item, i) => (
+                    <li key={i}>
+                      {item.label}
+                      {item.value != null && item.value !== "" && (
+                        <span className="text-[var(--muted)]"> — {item.value}</span>
+                      )}
+                      {item.caseIds && item.caseIds.length > 0 && (
+                        <span className="ml-1">
+                          <Link
+                            href={`/cases/${item.caseIds[0]}`}
+                            className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                          >
+                            {item.caseIds.length === 1 ? "View case" : `View ${item.caseIds.length} cases`}
+                          </Link>
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-4 pt-3 border-t border-[var(--border)] text-xs text-[var(--muted)]">
+                This recommendation is data-driven but remains an AI prediction. The model does not take into account any protected characteristics of the employee (such as age, gender, race, ethnicity, sexual orientation, religion, disability, marital status, or nationality).
+              </p>
+            </div>
+          )}
+        </section>
 
         {(employee.phone || employee.dateOfBirth || employee.nationality || employee.maritalStatus || employee.emergencyContact) && (
           <section className="card p-6">

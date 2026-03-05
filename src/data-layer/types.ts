@@ -360,3 +360,52 @@ export interface DatabaseMonitoringResult {
   performanceActions?: string[];
   indexingMetrics?: IndexingMetricsSample;
 }
+
+// --- Career trajectory classifier: feature vector and result ---
+
+/**
+ * Flattened feature vector for career trajectory classification (normalized 0–1 or raw for distance).
+ * Intentionally excludes protected characteristics: age, gender, race, ethnicity, sexual orientation,
+ * religion, disability status, marital status, nationality, or any other legally protected attributes.
+ * Only job-relevant, performance-related signals are used.
+ */
+export interface CareerSnapshot {
+  employeeId: string;
+  /** Tenure in months */
+  tenureMonths: number;
+  /** Total leave balance (hours) */
+  leaveBalanceHours: number;
+  /** Average manager rating (1–5) across reviews */
+  avgManagerRating: number;
+  /** 1 if performance is improving (latest rating >= previous), else 0 */
+  performanceImproving: number;
+  /** Total HR/investigation/termination cases involving this employee */
+  caseCount: number;
+  /** Count of investigation + termination cases */
+  seriousCaseCount: number;
+  /** Ratio of completed to required/mandatory trainings (0–1) */
+  trainingCompletedRatio: number;
+  /** Level as number: L3=3, L4=4, L5=5, L6=6 */
+  levelNumeric: number;
+  /** Label for reference snapshots: outcome this employee had */
+  outcome?: "growth" | "termination";
+}
+
+/** A single factor in the trajectory result, with optional link to case(s) or data value for grounding */
+export interface CareerTrajectoryFactor {
+  label: string;
+  /** Case IDs so the UI can link to /cases/[id] */
+  caseIds?: string[];
+  /** Human-readable value from data (e.g. "12 hours", "2.0/5 avg") */
+  value?: string;
+}
+
+export interface CareerTrajectoryResult {
+  trend: "growth" | "termination" | "neutral";
+  confidence: number;
+  summary: string;
+  factors: string[];
+  /** Grounded factors with links to cases and actual numbers for the UI */
+  factorItems: CareerTrajectoryFactor[];
+  snapshot: CareerSnapshot;
+}
