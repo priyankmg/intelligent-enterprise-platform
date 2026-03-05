@@ -8,6 +8,9 @@ An enterprise platform for workforce transformed by a multi-agent architecture.
 ##Reference: This platform is an illustration of a multi-agent AI platform for employees and HR. For more details on the proposed agent architecture refer to this article on Medium: https://medium.com/@mg.priyank/building-an-intelligent-enterprise-platform-0d0dde61ba2a?postPublishedType=repub
 
 
+##Abstract: Enterprise software platforms are undergoing a paradigm shift from reactive, instruction-based tools toward autonomous, intelligent systems capable of reasoning and independent action. This paper introduces a novel five-plane architecture—comprising the Experience, Business, Stack, Orchestration, and Governance planes—designed to support governed AI operations at scale. By integrating emerging capabilities such as Multi-Agent Systems (MAS) and the Model Context Protocol (MCP), the framework demonstrates how intelligence can be embedded at every layer of the enterprise stack. A central thesis of the work is that the Governance Plane serves as the critical enabler for autonomy, providing the necessary boundaries for trusted operational participation. The proposed framework offers a roadmap for transitioning from static interfaces to active, intelligent participants in organizational operations.
+
+
 Basic architecture of the platform:
 1. Data Layer:
    At this layer, we have the following systems of record which represent domain specific systems that different domain / system teams own.
