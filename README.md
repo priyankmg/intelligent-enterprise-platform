@@ -58,6 +58,22 @@ This platform includes **7 AI agents**, grouped into two planes:
 
 All agents are orchestrated or triggered from the abstraction and UX layers; tech-plane agents are managed under **Tech agents** in the UI (API healing, Database monitoring, Pipeline healing).
 
+### Models used by agents
+
+| Agent | Model / approach |
+|-------|------------------|
+| **Semantic Layer Agent** | **OpenAI `gpt-4o-mini`** — policy metadata lookup (when `OPENAI_API_KEY` is set; otherwise mock). |
+| **Policy Evaluation Agent** | **OpenAI `gpt-4o-mini`** — evaluates snapshot and case against termination policy (otherwise mock). |
+| **Termination review synthesis** | **OpenAI `gpt-4o-mini`** — combines policy evaluation and similar cases into the final recommendation (otherwise mock). |
+| **Retrieval Augmentation Agent** | **No LLM** — rule/data-based: uses the cases retrieval service to fetch past cases by applied policy clause. |
+| **Career Trajectory Agent** | **k-NN (no LLM)** — deterministic: k=5 nearest neighbors (Manhattan distance) over growth/termination reference snapshots; majority vote for trend. |
+| **Self-healing (API healing) Agent** | **OpenAI `gpt-4o-mini`** — infers contract changes and proposes fixes (otherwise mock). |
+| **Database Monitoring Agent** | **No LLM** — compares ERP schema to last known state and updates views/pipelines. |
+| **Pipeline Agent** | **No LLM** — updates pipeline queries when invoked by DB monitoring. |
+| **AI Assistant (chat)** | **OpenAI `gpt-4o-mini`** — intent classification and reply generation (otherwise keyword-based intent and mock replies). |
+
+**Summary:** LLM-based agents use **OpenAI `gpt-4o-mini`** (set `OPENAI_API_KEY` in `.env` for live calls). The Career Trajectory, Retrieval Augmentation, Database Monitoring, and Pipeline agents are deterministic or rule-based and do not call an LLM.
+
 ---
 
 ## Running the platform
