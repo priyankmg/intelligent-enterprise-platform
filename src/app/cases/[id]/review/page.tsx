@@ -111,25 +111,24 @@ export default function TerminationReviewPage() {
     <Layout>
       <div className="space-y-8">
         <div className="flex items-center gap-4">
-          <Link href="/cases" className="text-[var(--accent)] hover:underline">
-            ← Cases
+          <Link href="/cases" className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]">
+            ← Back to cases
           </Link>
         </div>
 
         <header className="border-b border-[var(--border)] pb-6">
-          <h1 className="text-2xl font-bold">Termination review</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Termination review</h1>
           <p className="text-[var(--muted)] mt-1">{caseData?.subject}</p>
         </header>
 
-        {/* AI agent recommendation - at top for HR */}
-        <section className="bg-[var(--surface)] rounded-lg border-2 border-[var(--accent)] p-6">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+        <section className="card p-6 border-2 border-[var(--accent)]/50">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-2 flex flex-wrap items-center gap-2">
             AI policy analysis
             {!aiRec && (
               <button
                 onClick={runAIAnalysis}
                 disabled={aiLoading}
-                className="ml-2 px-3 py-1 text-sm rounded bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50"
+                className="btn-primary !py-1.5 text-sm disabled:opacity-50"
               >
                 {aiLoading ? "Analyzing..." : "Run analysis"}
               </button>
@@ -210,9 +209,8 @@ export default function TerminationReviewPage() {
           )}
         </section>
 
-        {/* Employee data snapshot - from data aggregation service */}
-        <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-          <h2 className="text-lg font-semibold mb-4">
+        <section className="card p-6">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">
             Employee data snapshot (as of {snapshot?.snapshotDate ?? "incident date"})
           </h2>
           {snapshot ? (
@@ -263,9 +261,9 @@ export default function TerminationReviewPage() {
           )}
         </section>
 
-        <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-          <h2 className="text-lg font-semibold mb-2">Next steps</h2>
-          <p className="text-[var(--muted)]">
+        <section className="card p-6">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-2">Next steps</h2>
+          <p className="text-[var(--muted)] text-sm">
             Review the AI recommendation and employee data above. Consider manager
             feedback, stakeholder input, and policy alignment. When ready, submit a
             formal termination in the system with the stated reason and rehire

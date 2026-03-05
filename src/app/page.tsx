@@ -52,31 +52,28 @@ export default function DashboardPage() {
   return (
     <Layout>
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           {user && (
-            <div className="text-sm text-[var(--muted)]">
-              {user.name} · {user.roles.join(", ")}
+            <div className="text-sm text-[var(--muted)] bg-[var(--surface)] px-3 py-1.5 rounded-lg border border-[var(--border)]">
+              {user.name} · <span className="text-[var(--text-secondary)]">{user.roles.join(", ")}</span>
             </div>
           )}
         </div>
 
-        <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-          <h2 className="text-lg font-semibold mb-4">My tasks</h2>
+        <section className="card p-6">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">My tasks</h2>
           {tasks.length === 0 ? (
-            <p className="text-[var(--muted)]">No open tasks.</p>
+            <p className="text-[var(--muted)] text-sm">No open tasks.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="divide-y divide-[var(--border)]">
               {tasks.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0"
-                >
-                  <span className="font-medium">{t.title}</span>
+                <li key={t.id} className="flex items-center justify-between py-3 first:pt-0">
+                  <span className="font-medium text-[var(--text)]">{t.title}</span>
                   <span className="text-sm text-[var(--muted)]">
                     {t.type} · {t.status}
                     {t.late && (
-                      <span className="ml-2 text-[var(--warning)]">Late</span>
+                      <span className="ml-2 text-[var(--warning)] font-medium">Late</span>
                     )}
                   </span>
                 </li>
@@ -88,65 +85,41 @@ export default function DashboardPage() {
         {(hrViews.presentToday?.length !== undefined ||
           hrViews.lowLeave?.length !== undefined ||
           hrViews.terminated?.length !== undefined) && (
-          <section className="grid gap-6 md:grid-cols-3">
-            <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-              <h3 className="font-semibold mb-2">Present today</h3>
-              <p className="text-2xl text-[var(--accent)]">
+          <section className="grid gap-4 sm:grid-cols-3">
+            <Link href="/employees?view=present_today" className="card p-6 block hover:border-[var(--accent)]/50">
+              <h3 className="text-sm font-medium text-[var(--muted)] mb-1">Present today</h3>
+              <p className="text-3xl font-bold text-[var(--accent)]">
                 {hrViews.presentToday?.length ?? 0}
               </p>
-              <Link
-                href="/employees?view=present_today"
-                className="text-sm text-[var(--accent)] hover:underline mt-2 inline-block"
-              >
-                View list
-              </Link>
-            </div>
-            <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-              <h3 className="font-semibold mb-2">Low leave balance</h3>
-              <p className="text-2xl text-[var(--warning)]">
+              <span className="text-sm text-[var(--accent)] mt-2 inline-block font-medium">View list →</span>
+            </Link>
+            <Link href="/employees?view=low_leave" className="card p-6 block hover:border-[var(--warning)]/50">
+              <h3 className="text-sm font-medium text-[var(--muted)] mb-1">Low leave balance</h3>
+              <p className="text-3xl font-bold text-[var(--warning)]">
                 {hrViews.lowLeave?.length ?? 0}
               </p>
-              <Link
-                href="/employees?view=low_leave"
-                className="text-sm text-[var(--accent)] hover:underline mt-2 inline-block"
-              >
-                View list
-              </Link>
-            </div>
-            <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-              <h3 className="font-semibold mb-2">Terminated (last month)</h3>
-              <p className="text-2xl text-[var(--danger)]">
+              <span className="text-sm text-[var(--accent)] mt-2 inline-block font-medium">View list →</span>
+            </Link>
+            <Link href="/employees?view=terminated" className="card p-6 block hover:border-[var(--danger)]/50">
+              <h3 className="text-sm font-medium text-[var(--muted)] mb-1">Terminated (last month)</h3>
+              <p className="text-3xl font-bold text-[var(--danger)]">
                 {hrViews.terminated?.length ?? 0}
               </p>
-              <Link
-                href="/employees?view=terminated"
-                className="text-sm text-[var(--accent)] hover:underline mt-2 inline-block"
-              >
-                View list
-              </Link>
-            </div>
+              <span className="text-sm text-[var(--accent)] mt-2 inline-block font-medium">View list →</span>
+            </Link>
           </section>
         )}
 
-        <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-          <h2 className="text-lg font-semibold mb-2">Quick actions</h2>
-          <div className="flex gap-4">
-            <Link
-              href="/employees"
-              className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90"
-            >
+        <section className="card p-6">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">Quick actions</h2>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/employees" className="btn-primary inline-block">
               Browse employees
             </Link>
-            <Link
-              href="/cases"
-              className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90"
-            >
+            <Link href="/cases" className="btn-primary inline-block">
               Cases & investigations
             </Link>
-            <Link
-              href="/profile"
-              className="px-4 py-2 rounded border border-[var(--border)] hover:bg-[var(--surface)]"
-            >
+            <Link href="/profile" className="btn-secondary inline-block">
               My profile
             </Link>
           </div>

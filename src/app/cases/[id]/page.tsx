@@ -56,14 +56,14 @@ export default function CaseDetailPage() {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/cases" className="text-[var(--accent)] hover:underline">
-            ← Cases
+          <Link href="/cases" className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]">
+            ← Back to cases
           </Link>
         </div>
 
         <header className="border-b border-[var(--border)] pb-6">
-          <h1 className="text-2xl font-bold">{caseData.subject}</h1>
-          <div className="flex gap-4 mt-2 text-sm text-[var(--muted)]">
+          <h1 className="text-2xl font-bold tracking-tight">{caseData.subject}</h1>
+          <div className="flex flex-wrap gap-3 mt-2 text-sm text-[var(--muted)]">
             <span>{caseData.type}</span>
             <span>{caseData.status}</span>
             <span>Employee {caseData.employeeId}</span>
@@ -72,17 +72,17 @@ export default function CaseDetailPage() {
         </header>
 
         {caseData.initialFinding && (
-          <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-            <h2 className="text-lg font-semibold mb-2">Initial finding</h2>
-            <p className="text-[var(--muted)] whitespace-pre-wrap">
+          <section className="card p-6">
+            <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-2">Initial finding</h2>
+            <p className="text-[var(--text-secondary)] text-sm leading-relaxed whitespace-pre-wrap">
               {caseData.initialFinding}
             </p>
           </section>
         )}
 
         {caseData.caseNotes && caseData.caseNotes.length > 0 && (
-          <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-            <h2 className="text-lg font-semibold mb-4">Case notes</h2>
+          <section className="card p-6">
+            <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">Case notes</h2>
             <ul className="space-y-4">
               {caseData.caseNotes.map((n) => (
                 <li
@@ -102,27 +102,24 @@ export default function CaseDetailPage() {
         )}
 
         {isInvestigation && hasInitialFinding && (
-          <section className="bg-[var(--surface)] rounded-lg border border-[var(--accent)] p-6">
-            <h2 className="text-lg font-semibold mb-2">Termination review</h2>
-            <p className="text-[var(--muted)] mb-4">
+          <section className="card p-6 border-[var(--accent)]/50">
+            <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-2">Termination review</h2>
+            <p className="text-[var(--muted)] text-sm mb-4">
               Initial finding determined. Initiate a termination review to pull employee
               data from all systems and get AI policy analysis before deciding.
             </p>
-            <Link
-              href="/cases/case-term-review-1/review"
-              className="inline-block px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90"
-            >
+            <Link href="/cases/case-term-review-1/review" className="btn-primary inline-block">
               Initiate termination review
             </Link>
           </section>
         )}
 
-        <div className="flex gap-4">
+        <div>
           <Link
             href={`/employees/${caseData.employeeId}`}
-            className="text-[var(--accent)] hover:underline"
+            className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
           >
-            View employee profile
+            View employee profile →
           </Link>
         </div>
       </div>

@@ -1,4 +1,13 @@
 // 1.1 Employee Master (ERP)
+export interface EmployeeAddress {
+  line1: string;
+  line2?: string;
+  city: string;
+  state?: string;
+  postalCode: string;
+  country: string;
+}
+
 export interface EmployeeMaster {
   id: string;
   name: string;
@@ -9,8 +18,14 @@ export interface EmployeeMaster {
   managerId?: string;
   level: string;
   workLocation: string;
-  address?: string;
+  /** Structured address for display; legacy string form also supported by API */
+  address?: EmployeeAddress;
+  phone?: string;
+  dateOfBirth?: string;
+  nationality?: string;
+  maritalStatus?: string;
   emergencyContact?: string;
+  emergencyContactPhone?: string;
   benefitsHistory: { effectiveDate: string; plan: string }[];
   teamHistory: { from: string; to?: string; team: string; managerId?: string }[];
 }
@@ -210,4 +225,138 @@ export interface TerminationRecommendation {
   similarCases: SimilarCase[];
   policyEvaluation: PolicyEvaluationResult;
   semanticLayerSummary?: string;
+}
+
+// --- Self-Healing Agent: API failure between middle layer and systems of record ---
+
+export type SystemName = "erp" | "leave" | "attendance" | "accommodations" | "performance" | "cases" | "training" | "policy";
+
+export type FailureKind = "request_rejected" | "response_contract_changed";
+
+export interface ApiFailure {
+  id: string;
+  timestamp: string;
+  systemName: SystemName;
+  endpoint: string;
+  method: string;
+  kind: FailureKind;
+  /** Request payload sent (if any) */
+  requestPayload?: unknown;
+  /** Raw response body from system (error or unexpected shape) */
+  responseBody?: unknown;
+  /** HTTP status if available */
+  statusCode?: number;
+  errorMessage: string;
+  /** Current contract version/schema the middle layer expected (for comparison) */
+  expectedRequestSchema?: Record<string, unknown>;
+  expectedResponseSchema?: Record<string, unknown>;
+  /** Healing attempts so far */
+  attempts: number;
+  healed?: boolean;
+  ticketId?: string;
+}
+
+/** Data contract (simplified schema) the middle layer uses for a system */
+export interface DataContract {
+  version: string;
+  requestSchema?: Record<string, unknown>;
+  responseSchema?: Record<string, unknown>;
+  /** Optional: allow extra fields in response */
+  responseAllowAdditional?: boolean;
+}
+
+/** Ticket created by Self-Healing Agent for engineering or FYI */
+export interface HealingTicket {
+  id: string;
+  type: "engineering" | "fyi";
+  systemName: SystemName;
+  failureId: string;
+  createdAt: string;
+  title: string;
+  body: string;
+  status: "open" | "acknowledged" | "resolved";
+  /** What the agent identified as the issue */
+  agentIdentification?: string;
+  /** What the agent tried (fixes applied, retries) */
+  agentAttempts?: string;
+  /** For engineering: what the team must look at. For FYI: the fix applied */
+  resolutionNote?: string;
+}
+
+// --- Database Monitoring Agent: ERP datatable schema, views, pipelines, indexing ---
+
+export type TableId = "erp_employees" | "erp_leave" | "erp_policies";
+
+/** Single column in a table schema */
+export interface TableColumnDef {
+  name: string;
+  type: "string" | "number" | "date" | "boolean" | "object";
+  /** Optional: enum or rule description that affects views/pipelines */
+  valueRules?: string;
+}
+
+/** Snapshot of a table schema at a point in time */
+export interface TableSchemaSnapshot {
+  tableId: TableId;
+  version: string;
+  columns: TableColumnDef[];
+  detectedAt: string;
+}
+
+/** Detected change between two schema versions */
+export type SchemaChangeType = "column_added" | "column_removed" | "column_renamed" | "column_type_changed" | "value_rules_changed";
+
+export interface SchemaChange {
+  type: SchemaChangeType;
+  columnName: string;
+  /** For renames: new name; for type/rules: new value */
+  newColumnName?: string;
+  newType?: TableColumnDef["type"];
+  newValueRules?: string;
+}
+
+/** View or materialized view that depends on a table */
+export interface ViewDef {
+  id: string;
+  name: string;
+  tableId: TableId;
+  /** Query text or reference; used to detect impact and rewrite */
+  query: string;
+  /** Column names this view references (for impact analysis) */
+  referencedColumns: string[];
+  lastUpdatedAt: string;
+}
+
+/** Reporting pipeline that reads from table(s) or views */
+export interface PipelineDef {
+  id: string;
+  name: string;
+  /** Source table or view id */
+  sourceTableId: TableId;
+  query: string;
+  referencedColumns: string[];
+  lastUpdatedAt: string;
+}
+
+/** Indexing performance sample */
+export interface IndexingMetricsSample {
+  tableId: TableId;
+  rowCount: number;
+  durationMs: number;
+  sampledAt: string;
+}
+
+/** Outcome of DB monitoring agent run */
+export interface DatabaseMonitoringResult {
+  runId: string;
+  runAt: string;
+  schemaChangeDetected: boolean;
+  schemaChanges?: SchemaChange[];
+  viewsUpdated?: string[];
+  pipelinesUpdated?: string[];
+  apiHealingNotified?: boolean;
+  pipelineAgentInvoked?: boolean;
+  performanceDegraded?: boolean;
+  performanceActions?: string[];
+  indexingMetrics?: IndexingMetricsSample;
 }

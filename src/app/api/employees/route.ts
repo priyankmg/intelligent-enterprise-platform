@@ -8,7 +8,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { searchParams } = new URL(request.url);
   const terminatedInMonths = searchParams.get("terminatedInMonths");
-  const supportedByHr = searchParams.get("supportedByHr"); // could filter by HR's org
   let list = [...employees];
   if (terminatedInMonths) {
     const cutoff = new Date();

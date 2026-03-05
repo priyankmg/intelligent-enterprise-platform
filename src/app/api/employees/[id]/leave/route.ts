@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/abstraction-layer/iam";
-import { canAccess } from "@/abstraction-layer/iam";
-import {
-  leaveBalances,
-  leaveRecords,
-} from "@/data-layer/mock-data";
+import { getSessionUser, canAccess } from "@/abstraction-layer/iam";
+import { leaveBalances, leaveRecords } from "@/data-layer/mock-data";
 
 export async function GET(
   _request: Request,

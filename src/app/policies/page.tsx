@@ -24,28 +24,27 @@ export default function PoliciesPage() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Policy central</h1>
-        <p className="text-[var(--muted)]">
-          Company policies with version history. Different teams define and maintain their policies.
-        </p>
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Policy central</h1>
+          <p className="text-[var(--muted)] mt-1">
+            Company policies with version history. Different teams define and maintain their policies.
+          </p>
+        </div>
         <div className="space-y-4">
           {policies.map((p) => (
-            <article
-              key={p.id}
-              className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold">{p.name}</h2>
-                <span className="text-sm text-[var(--muted)]">
+            <article key={p.id} className="card p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 className="text-lg font-semibold text-[var(--text)]">{p.name}</h2>
+                <span className="text-xs text-[var(--muted)]">
                   v{p.version} · {p.category} · effective {p.effectiveDate}
                 </span>
               </div>
-              <p className="text-[var(--muted)] whitespace-pre-wrap">{p.body}</p>
+              <p className="text-[var(--text-secondary)] text-sm leading-relaxed whitespace-pre-wrap">{p.body}</p>
             </article>
           ))}
           {policies.length === 0 && (
-            <p className="text-[var(--muted)]">No policies loaded or access denied.</p>
+            <p className="text-[var(--muted)] text-sm">No policies loaded or access denied.</p>
           )}
         </div>
       </div>

@@ -52,63 +52,62 @@ export default function MyProfilePage() {
   return (
     <Layout>
       <div className="space-y-8">
-        <h1 className="text-2xl font-bold">My profile</h1>
-        <p className="text-[var(--muted)]">
-          View your data across systems.{" "}
-          <Link href="/employees" className="text-[var(--accent)] hover:underline">
-            Contact HR or support
-          </Link>{" "}
-          for help or to track open cases.
-        </p>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">My profile</h1>
+          <p className="text-[var(--muted)] mt-1">
+            View your data across systems.{" "}
+            <Link href="/employees" className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium">
+              Contact HR or support
+            </Link>{" "}
+            for help or to track open cases.
+          </p>
+        </div>
 
-        <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-          <h2 className="text-lg font-semibold mb-4">Profile</h2>
-          <dl className="grid gap-2 sm:grid-cols-2">
-            <dt className="text-[var(--muted)]">Name</dt>
-            <dd>{emp?.name ?? user.name}</dd>
-            <dt className="text-[var(--muted)]">Email</dt>
-            <dd>{user.email}</dd>
-            <dt className="text-[var(--muted)]">Team</dt>
-            <dd>{emp?.team ?? "—"}</dd>
-            <dt className="text-[var(--muted)]">Level</dt>
-            <dd>{emp?.level ?? "—"}</dd>
+        <section className="card p-6">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">Profile</h2>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <dt className="text-sm text-[var(--muted)]">Name</dt>
+            <dd className="text-[var(--text)]">{emp?.name ?? user.name}</dd>
+            <dt className="text-sm text-[var(--muted)]">Email</dt>
+            <dd className="text-[var(--text)]">{user.email}</dd>
+            <dt className="text-sm text-[var(--muted)]">Team</dt>
+            <dd className="text-[var(--text-secondary)]">{emp?.team ?? "—"}</dd>
+            <dt className="text-sm text-[var(--muted)]">Level</dt>
+            <dd className="text-[var(--text-secondary)]">{emp?.level ?? "—"}</dd>
           </dl>
         </section>
 
         {leaveData?.balances && leaveData.balances.length > 0 && (
-          <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-            <h2 className="text-lg font-semibold mb-4">My leave balance</h2>
+          <section className="card p-6">
+            <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">My leave balance</h2>
             <ul className="space-y-2">
               {leaveData.balances.map((b) => (
-                <li key={b.type}>
-                  {b.type}: {b.balance} {b.unit}
+                <li key={b.type} className="text-[var(--text-secondary)]">
+                  <span className="font-medium text-[var(--text)]">{b.type}</span>: {b.balance} {b.unit}
                 </li>
               ))}
             </ul>
           </section>
         )}
 
-        <section className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-6">
-          <h2 className="text-lg font-semibold mb-4">My cases / requests</h2>
+        <section className="card p-6">
+          <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">My cases / requests</h2>
           {cases.length === 0 ? (
-            <p className="text-[var(--muted)]">No open cases.</p>
+            <p className="text-[var(--muted)] text-sm">No open cases.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="divide-y divide-[var(--border)]">
               {cases.map((c) => (
-                <li key={c.id} className="flex justify-between py-2 border-b border-[var(--border)] last:border-0">
-                  <span>{c.subject}</span>
-                  <span className="text-[var(--muted)]">{c.status}</span>
+                <li key={c.id} className="flex justify-between py-3 first:pt-0">
+                  <span className="text-[var(--text)]">{c.subject}</span>
+                  <span className="text-sm text-[var(--muted)]">{c.status}</span>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        <div className="flex gap-4">
-          <Link
-            href={`/employees/${user.employeeId}`}
-            className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90"
-          >
+        <div>
+          <Link href={`/employees/${user.employeeId}`} className="btn-primary inline-block">
             View full profile (all systems)
           </Link>
         </div>
