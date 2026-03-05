@@ -1,5 +1,8 @@
 # intelligent-enterprise-platform
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+
 A governed multi-agent AI platform for enterprise HR — featuring policy evaluation, career trajectory prediction, self-healing infrastructure agents, and self-governance agents. 
 
 ##Creator: Priyank Mohan, Senior IEEE Member and Product Manager
