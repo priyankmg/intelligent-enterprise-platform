@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+// Vercel serverless functions run in a read-only filesystem except /tmp
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "data")
+  : path.join(process.cwd(), "data");
 
 function getDataPath(filename: string): string {
   return path.join(DATA_DIR, filename);
