@@ -25,36 +25,39 @@ export async function POST(request: Request) {
       const result = callErp("/employees", {});
       if (!result.ok) {
         const healing = await runSelfHealingAgent(result.failureId);
+        const healingResult = healing && !("blocked" in healing) ? healing : null;
         return NextResponse.json({
           ok: true,
           failureId: result.failureId,
-          healed: healing?.healed ?? false,
-          ticketId: healing?.ticketId,
-          message: healing?.healed ? "Case created and healed." : "Case created; requires attention.",
+          healed: healingResult?.healed ?? false,
+          ticketId: healingResult?.ticketId,
+          message: healingResult?.healed ? "Case created and healed." : "Case created; requires attention.",
         });
       }
     } else if (system === "leave") {
       const result = callLeave("/employees/emp-1/leave", { employeeId: "emp-1" });
       if (!result.ok) {
         const healing = await runSelfHealingAgent(result.failureId);
+        const healingResult = healing && !("blocked" in healing) ? healing : null;
         return NextResponse.json({
           ok: true,
           failureId: result.failureId,
-          healed: healing?.healed ?? false,
-          ticketId: healing?.ticketId,
-          message: healing?.healed ? "Case created and healed." : "Case created; requires attention.",
+          healed: healingResult?.healed ?? false,
+          ticketId: healingResult?.ticketId,
+          message: healingResult?.healed ? "Case created and healed." : "Case created; requires attention.",
         });
       }
     } else {
       const result = callPolicy("/policies");
       if (!result.ok) {
         const healing = await runSelfHealingAgent(result.failureId);
+        const healingResult = healing && !("blocked" in healing) ? healing : null;
         return NextResponse.json({
           ok: true,
           failureId: result.failureId,
-          healed: healing?.healed ?? false,
-          ticketId: healing?.ticketId,
-          message: healing?.healed ? "Case created and healed." : "Case created; requires attention.",
+          healed: healingResult?.healed ?? false,
+          ticketId: healingResult?.ticketId,
+          message: healingResult?.healed ? "Case created and healed." : "Case created; requires attention.",
         });
       }
     }
