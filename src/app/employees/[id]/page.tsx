@@ -19,14 +19,14 @@ interface TrainingItem {
 
 type SourceStatus = "loading" | "ok" | "empty" | "error";
 
-const DATA_SOURCES: { key: string; label: string; abbr: string }[] = [
-  { key: "erp", label: "Employee Master", abbr: "ERP" },
-  { key: "leave", label: "Leave & Attendance", abbr: "Leave" },
-  { key: "accommodations", label: "Disability & Accommodations", abbr: "Accommodations" },
-  { key: "performance", label: "Performance & Feedback", abbr: "Performance" },
-  { key: "cases", label: "HR Cases", abbr: "Cases" },
-  { key: "training", label: "Training", abbr: "Training" },
-  { key: "policy", label: "Policy Central", abbr: "Policy" },
+const DATA_SOURCES: { key: string; label: string; abbr: string; via: "API" | "Data Lake" }[] = [
+  { key: "erp", label: "Employee Master", abbr: "ERP", via: "API" },
+  { key: "leave", label: "Leave & Attendance", abbr: "Leave", via: "API" },
+  { key: "accommodations", label: "Disability & Accommodations", abbr: "Accommodations", via: "Data Lake" },
+  { key: "performance", label: "Performance & Feedback", abbr: "Performance", via: "API" },
+  { key: "cases", label: "HR Cases", abbr: "Cases", via: "Data Lake" },
+  { key: "training", label: "Training", abbr: "Training", via: "API" },
+  { key: "policy", label: "Policy Central", abbr: "Policy", via: "API" },
 ];
 
 export default function EmployeeProfilePage() {
@@ -160,30 +160,34 @@ export default function EmployeeProfilePage() {
           </div>
         </header>
 
-        {/* Data source status */}
+        {/* Systems of Record */}
         <section>
-          <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-2">Data sources</p>
+          <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-2">Systems of Record</p>
           <div className="flex flex-wrap gap-2">
             {DATA_SOURCES.map((src) => {
               const status = sourceStatus[src.key];
               const isOk = status === "ok" || status === "empty";
               const isLoading = status === "loading";
               const isError = status === "error";
+              const statusLabel = isLoading ? "Connecting…" : isOk ? "Connected" : isError ? "Disconnected" : "Unknown";
               return (
                 <div
                   key={src.key}
-                  title={`${src.label} — ${status === "loading" ? "connecting…" : status === "ok" ? "connected" : status === "empty" ? "connected (no data)" : "disconnected"}`}
-                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]"
+                  title={`${src.label} — ${statusLabel}`}
+                  className="flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
                 >
                   <span
-                    className={`h-2 w-2 rounded-full shrink-0 ${
+                    className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
                       isLoading ? "bg-[var(--muted)] animate-pulse" :
                       isOk ? "bg-[var(--success)]" :
                       isError ? "bg-[var(--danger)]" :
                       "bg-[var(--muted)]"
                     }`}
                   />
-                  <span>{src.abbr}</span>
+                  <div>
+                    <p className="text-xs font-medium text-[var(--text-secondary)] leading-tight">{src.label}</p>
+                    <p className="text-[10px] text-[var(--muted)] mt-0.5">via {src.via}</p>
+                  </div>
                 </div>
               );
             })}

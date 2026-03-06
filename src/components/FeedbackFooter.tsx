@@ -55,7 +55,7 @@ export function FeedbackFooter() {
 
           {/* Reaction */}
           <div className="flex items-center gap-3">
-            <span className="text-xs text-[var(--muted)]">Was this helpful?</span>
+            <span className="text-xs text-[var(--muted)]">Do you like this?</span>
             {reactionState === "done" ? (
               <span className="text-xs text-[var(--success)]">Thanks for your feedback!</span>
             ) : (
@@ -105,16 +105,16 @@ export function FeedbackFooter() {
                 Leave detailed feedback →
               </button>
             ) : (
-              <div className="space-y-2 max-w-lg">
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    placeholder="Your name (optional)"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={textState !== "idle"}
-                    className="w-full sm:w-40 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-xs text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50"
-                  />
+              <div className="space-y-2 max-w-xl">
+                <input
+                  type="text"
+                  placeholder="Your name (optional)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={textState !== "idle"}
+                  className="w-full sm:w-48 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-xs text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50"
+                />
+                <div className="flex items-start gap-2">
                   <textarea
                     placeholder="Share your feedback…"
                     value={message}
@@ -123,25 +123,25 @@ export function FeedbackFooter() {
                     disabled={textState !== "idle"}
                     className="flex-1 resize-none rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-xs text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50"
                   />
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={submitText}
+                      disabled={!message.trim() || textState !== "idle"}
+                      className="btn-primary text-xs !py-1.5 !px-3 disabled:opacity-50"
+                    >
+                      {textState === "loading" ? "Submitting…" : textState === "done" ? "Submitted!" : "Submit"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setExpanded(false); setTextState("idle"); setMessage(""); setName(""); }}
+                      className="text-xs text-[var(--muted)] hover:text-[var(--text)] text-center"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={submitText}
-                    disabled={!message.trim() || textState !== "idle"}
-                    className="btn-primary text-xs !py-1.5 !px-3 disabled:opacity-50"
-                  >
-                    {textState === "loading" ? "Submitting…" : textState === "done" ? "Submitted!" : "Submit"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setExpanded(false); setTextState("idle"); setMessage(""); setName(""); }}
-                    className="text-xs text-[var(--muted)] hover:text-[var(--text)]"
-                  >
-                    Cancel
-                  </button>
-                  {textState === "error" && <span className="text-xs text-[var(--danger)]">Failed. Try again.</span>}
-                </div>
+                {textState === "error" && <span className="text-xs text-[var(--danger)]">Failed. Try again.</span>}
               </div>
             )}
           </div>

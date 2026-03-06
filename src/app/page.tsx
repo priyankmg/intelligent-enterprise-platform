@@ -260,6 +260,28 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Ask the AI Assistant */}
+            <div className="card p-5 flex flex-col gap-4">
+              <div>
+                <h3 className="font-semibold text-[var(--text)] mb-1">Ask the AI Assistant</h3>
+                <p className="text-xs text-[var(--muted)]">Ask questions about employees, cases, policies, or anything across the platform. The assistant has context across all modules.</p>
+              </div>
+              <ul className="space-y-1 text-xs text-[var(--text-secondary)]">
+                <li className="flex items-center gap-2"><span className="text-[var(--accent)]">›</span> "What is the status of case-term-review-1?"</li>
+                <li className="flex items-center gap-2"><span className="text-[var(--accent)]">›</span> "Which employees have low leave balance?"</li>
+                <li className="flex items-center gap-2"><span className="text-[var(--accent)]">›</span> "Simulate an ERP failure and heal it."</li>
+              </ul>
+              <div className="mt-auto pt-3 border-t border-[var(--border)]">
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("open-assistant"))}
+                  className="btn-primary text-xs !py-1.5 !px-3"
+                >
+                  Open AI Assistant →
+                </button>
+              </div>
+            </div>
+
           </div>
         </section>
 

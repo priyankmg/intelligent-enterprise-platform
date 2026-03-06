@@ -47,6 +47,12 @@ export function AssistantChat() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("open-assistant", handler);
+    return () => window.removeEventListener("open-assistant", handler);
+  }, []);
+
   const send = async () => {
     const text = input.trim();
     if (!text || loading) return;
