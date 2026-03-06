@@ -17,6 +17,18 @@ interface TrainingItem {
   status: string;
 }
 
+type SourceStatus = "loading" | "ok" | "empty" | "error";
+
+const DATA_SOURCES: { key: string; label: string; abbr: string }[] = [
+  { key: "erp", label: "Employee Master", abbr: "ERP" },
+  { key: "leave", label: "Leave & Attendance", abbr: "Leave" },
+  { key: "accommodations", label: "Disability & Accommodations", abbr: "Accommodations" },
+  { key: "performance", label: "Performance & Feedback", abbr: "Performance" },
+  { key: "cases", label: "HR Cases", abbr: "Cases" },
+  { key: "training", label: "Training", abbr: "Training" },
+  { key: "policy", label: "Policy Central", abbr: "Policy" },
+];
+
 export default function EmployeeProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -30,6 +42,12 @@ export default function EmployeeProfilePage() {
   const [trajectory, setTrajectory] = useState<CareerTrajectoryResult | null>(null);
   const [trajectoryLoading, setTrajectoryLoading] = useState(false);
   const [trajectoryError, setTrajectoryError] = useState<string | null>(null);
+  const [sourceStatus, setSourceStatus] = useState<Record<string, SourceStatus>>(
+    Object.fromEntries(DATA_SOURCES.map((s) => [s.key, "loading"]))
+  );
+
+  const setStatus = (key: string, status: SourceStatus) =>
+    setSourceStatus((prev) => ({ ...prev, [key]: status }));
 
   const fetchTrajectory = () => {
     if (!id) return;
@@ -49,25 +67,68 @@ export default function EmployeeProfilePage() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([
-      fetch(`/api/employees/${id}`).then((r) => r.json()),
-      fetch(`/api/employees/${id}/leave`).then((r) => r.json()).catch(() => null),
-      fetch(`/api/employees/${id}/accommodations`).then((r) => r.json()).catch(() => []),
-      fetch(`/api/employees/${id}/performance`).then((r) => r.json()).catch(() => []),
-      fetch(`/api/employees/${id}/cases`).then((r) => r.json()).catch(() => []),
-      fetch(`/api/employees/${id}/training`).then((r) => r.json()).catch(() => []),
-    ]).then(([emp, lv, acc, perf, cas, tr]) => {
-      if (emp?.error) {
-        router.push("/employees");
-        return;
-      }
-      setEmployee(emp as EmployeeMaster);
-      setLeave(lv as LeaveData | null);
-      setAccommodations(Array.isArray(acc) ? (acc as AccommodationCase[]) : []);
-      setPerformance(Array.isArray(perf) ? (perf as PerformanceReview[]) : []);
-      setCases(Array.isArray(cas) ? (cas as HRCase[]) : []);
-      setTraining(Array.isArray(tr) ? (tr as TrainingItem[]) : []);
-    });
+
+    // Employee Master
+    fetch(`/api/employees/${id}`)
+      .then((r) => r.json())
+      .then((emp) => {
+        if (emp?.error) { router.push("/employees"); return; }
+        setEmployee(emp as EmployeeMaster);
+        setStatus("erp", "ok");
+      })
+      .catch(() => setStatus("erp", "error"));
+
+    // Leave & Attendance
+    fetch(`/api/employees/${id}/leave`)
+      .then((r) => r.json())
+      .then((lv) => {
+        setLeave(lv as LeaveData | null);
+        setStatus("leave", lv ? "ok" : "empty");
+      })
+      .catch(() => setStatus("leave", "error"));
+
+    // Accommodations
+    fetch(`/api/employees/${id}/accommodations`)
+      .then((r) => r.json())
+      .then((acc) => {
+        const list = Array.isArray(acc) ? (acc as AccommodationCase[]) : [];
+        setAccommodations(list);
+        setStatus("accommodations", list.length > 0 ? "ok" : "empty");
+      })
+      .catch(() => setStatus("accommodations", "error"));
+
+    // Performance
+    fetch(`/api/employees/${id}/performance`)
+      .then((r) => r.json())
+      .then((perf) => {
+        const list = Array.isArray(perf) ? (perf as PerformanceReview[]) : [];
+        setPerformance(list);
+        setStatus("performance", list.length > 0 ? "ok" : "empty");
+      })
+      .catch(() => setStatus("performance", "error"));
+
+    // Cases
+    fetch(`/api/employees/${id}/cases`)
+      .then((r) => r.json())
+      .then((cas) => {
+        const list = Array.isArray(cas) ? (cas as HRCase[]) : [];
+        setCases(list);
+        setStatus("cases", list.length > 0 ? "ok" : "empty");
+      })
+      .catch(() => setStatus("cases", "error"));
+
+    // Training
+    fetch(`/api/employees/${id}/training`)
+      .then((r) => r.json())
+      .then((tr) => {
+        const list = Array.isArray(tr) ? (tr as TrainingItem[]) : [];
+        setTraining(list);
+        setStatus("training", list.length > 0 ? "ok" : "empty");
+      })
+      .catch(() => setStatus("training", "error"));
+
+    // Policy Central (static — always connected)
+    setStatus("policy", "ok");
   }, [id, router]);
 
   if (!employee) {
@@ -98,6 +159,36 @@ export default function EmployeeProfilePage() {
             )}
           </div>
         </header>
+
+        {/* Data source status */}
+        <section>
+          <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-2">Data sources</p>
+          <div className="flex flex-wrap gap-2">
+            {DATA_SOURCES.map((src) => {
+              const status = sourceStatus[src.key];
+              const isOk = status === "ok" || status === "empty";
+              const isLoading = status === "loading";
+              const isError = status === "error";
+              return (
+                <div
+                  key={src.key}
+                  title={`${src.label} — ${status === "loading" ? "connecting…" : status === "ok" ? "connected" : status === "empty" ? "connected (no data)" : "disconnected"}`}
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]"
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full shrink-0 ${
+                      isLoading ? "bg-[var(--muted)] animate-pulse" :
+                      isOk ? "bg-[var(--success)]" :
+                      isError ? "bg-[var(--danger)]" :
+                      "bg-[var(--muted)]"
+                    }`}
+                  />
+                  <span>{src.abbr}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {!employee.dateOfTermination && <section className="card p-6">
           <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-4">Career trajectory</h2>

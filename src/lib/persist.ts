@@ -29,7 +29,8 @@ export function readJsonFile<T>(filename: string): T | null {
 }
 
 export function writeJsonFile(filename: string, data: unknown): void {
-  ensureDataDir();
   const filePath = getDataPath(filename);
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 }

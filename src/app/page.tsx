@@ -30,12 +30,10 @@ const CASE_TERM_REVIEW_1 = {
   employeeName: "Alex Chen",
 };
 
-const CAREER_TRAJECTORY_EMPLOYEE = {
-  id: "emp-7",
-  name: "Jamie Foster",
-  level: "L4",
-  team: "Engineering",
-};
+const CAREER_TRAJECTORY_EMPLOYEES = [
+  { id: "emp-1", name: "Alex Chen", level: "L4", team: "Product" },
+  { id: "emp-7", name: "Jamie Foster", level: "L4", team: "Engineering" },
+];
 
 const CASE_REVIEW_AGENTS = [
   "Semantic Layer Agent",
@@ -185,17 +183,22 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="mt-auto pt-3 border-t border-[var(--border)]">
-                <p className="text-xs text-[var(--muted)] mb-2">Example employee</p>
-                <Link
-                  href={`/employees/${CAREER_TRAJECTORY_EMPLOYEE.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg p-3 bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--accent)]/50 transition-colors"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text)]">{CAREER_TRAJECTORY_EMPLOYEE.name}</p>
-                    <p className="text-xs text-[var(--muted)] mt-0.5">{CAREER_TRAJECTORY_EMPLOYEE.level} · {CAREER_TRAJECTORY_EMPLOYEE.team}</p>
-                  </div>
-                  <span className="text-xs text-[var(--accent)] font-medium shrink-0">View profile →</span>
-                </Link>
+                <p className="text-xs text-[var(--muted)] mb-2">Example employees</p>
+                <div className="space-y-2">
+                  {CAREER_TRAJECTORY_EMPLOYEES.map((emp) => (
+                    <Link
+                      key={emp.id}
+                      href={`/employees/${emp.id}`}
+                      className="flex items-center justify-between gap-3 rounded-lg p-3 bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--accent)]/50 transition-colors"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text)]">{emp.name}</p>
+                        <p className="text-xs text-[var(--muted)] mt-0.5">{emp.level} · {emp.team}</p>
+                      </div>
+                      <span className="text-xs text-[var(--accent)] font-medium shrink-0">View profile →</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
 

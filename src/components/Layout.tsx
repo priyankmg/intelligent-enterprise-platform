@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { AssistantChat } from "@/components/AssistantChat";
+import { FeedbackFooter } from "@/components/FeedbackFooter";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -103,6 +104,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
+      <FeedbackFooter />
       <AssistantChat />
     </div>
   );
