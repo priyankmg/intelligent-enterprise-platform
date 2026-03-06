@@ -175,7 +175,7 @@ export function AssistantChat() {
               />
               <button
                 type="button"
-                onClick={send}
+                onClick={() => send()}
                 disabled={loading || !input.trim()}
                 className="btn-primary self-end shrink-0 disabled:opacity-50"
               >
