@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface Message {
   id: string;
@@ -38,6 +38,7 @@ export function AssistantChat() {
   const [loading, setLoading] = useState(false);
   const listEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const pendingMessageRef = useRef<string | null>(null);
 
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -47,16 +48,10 @@ export function AssistantChat() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  useEffect(() => {
-    const handler = () => setOpen(true);
-    window.addEventListener("open-assistant", handler);
-    return () => window.removeEventListener("open-assistant", handler);
-  }, []);
-
-  const send = async () => {
-    const text = input.trim();
+  const send = useCallback(async (overrideText?: string) => {
+    const text = (overrideText ?? input).trim();
     if (!text || loading) return;
-    setInput("");
+    if (!overrideText) setInput("");
     const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text };
     setMessages((m) => [...m, userMsg]);
     setLoading(true);
@@ -76,7 +71,26 @@ export function AssistantChat() {
       setMessages((m) => [...m, errMsg]);
     }
     setLoading(false);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input, loading]);
+
+  useEffect(() => {
+    if (open && pendingMessageRef.current) {
+      const msg = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      send(msg);
+    }
+  }, [open, send]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent<{ message?: string }>).detail?.message;
+      if (msg) pendingMessageRef.current = msg;
+      setOpen(true);
+    };
+    window.addEventListener("open-assistant", handler);
+    return () => window.removeEventListener("open-assistant", handler);
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import Link from "next/link";
 
@@ -54,6 +54,65 @@ const GOVERNANCE_AGENTS = [
   { label: "Policy Control Agent", description: "Propagates policy changes across all agents" },
   { label: "Bias Correction Agent", description: "Monitors for bias in trajectory and termination decisions" },
 ];
+
+const EXAMPLE_PROMPTS = [
+  "What is the status of case-term-review-1?",
+  "Which employees have low leave balance?",
+  "Simulate an ERP failure and heal it.",
+];
+
+function EmbeddedAssistantInput() {
+  const [value, setValue] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const dispatch = (text: string) => {
+    const msg = text.trim();
+    if (!msg) return;
+    window.dispatchEvent(new CustomEvent("open-assistant", { detail: { message: msg } }));
+    setValue("");
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex gap-2 items-end">
+        <textarea
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              dispatch(value);
+            }
+          }}
+          placeholder="Type a question and press Enter or Send…"
+          rows={2}
+          className="flex-1 resize-none rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+        />
+        <button
+          type="button"
+          onClick={() => dispatch(value)}
+          disabled={!value.trim()}
+          className="btn-primary self-end shrink-0 disabled:opacity-40"
+        >
+          Send
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {EXAMPLE_PROMPTS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => dispatch(p)}
+            className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text-secondary)] hover:border-[var(--accent)]/60 hover:text-[var(--accent)] transition-colors text-left"
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -138,6 +197,22 @@ export default function DashboardPage() {
         <section>
           <h2 className="text-base font-semibold text-[var(--text-secondary)] mb-3">Quick Actions</h2>
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+
+            {/* AI Assistant — full-width embedded widget */}
+            <div className="md:col-span-2 card p-5 flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-semibold text-[var(--text)] mb-0.5">Ask the AI Assistant</h3>
+                  <p className="text-xs text-[var(--muted)]">Ask anything about employees, cases, policies, or platform operations. Type below to start — the full assistant will open so you can continue the conversation.</p>
+                </div>
+                <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </span>
+              </div>
+              <EmbeddedAssistantInput />
+            </div>
 
             {/* Case Review */}
             <div className="card p-5 flex flex-col gap-4">
@@ -257,28 +332,6 @@ export default function DashboardPage() {
                 <Link href="/governance" className="text-xs text-[var(--accent)] font-medium hover:text-[var(--accent-hover)]">
                   Go to Governance Agents →
                 </Link>
-              </div>
-            </div>
-
-            {/* Ask the AI Assistant */}
-            <div className="card p-5 flex flex-col gap-4">
-              <div>
-                <h3 className="font-semibold text-[var(--text)] mb-1">Ask the AI Assistant</h3>
-                <p className="text-xs text-[var(--muted)]">Ask questions about employees, cases, policies, or anything across the platform. The assistant has context across all modules.</p>
-              </div>
-              <ul className="space-y-1 text-xs text-[var(--text-secondary)]">
-                <li className="flex items-center gap-2"><span className="text-[var(--accent)]">›</span> "What is the status of case-term-review-1?"</li>
-                <li className="flex items-center gap-2"><span className="text-[var(--accent)]">›</span> "Which employees have low leave balance?"</li>
-                <li className="flex items-center gap-2"><span className="text-[var(--accent)]">›</span> "Simulate an ERP failure and heal it."</li>
-              </ul>
-              <div className="mt-auto pt-3 border-t border-[var(--border)]">
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new CustomEvent("open-assistant"))}
-                  className="btn-primary text-xs !py-1.5 !px-3"
-                >
-                  Open AI Assistant →
-                </button>
               </div>
             </div>
 
