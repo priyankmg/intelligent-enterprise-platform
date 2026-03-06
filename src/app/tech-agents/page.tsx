@@ -64,7 +64,7 @@ function TechAgentsContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tech agents</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Tech Agents</h1>
         <p className="text-[var(--muted)] mt-1 max-w-2xl">
           API healing, database monitoring, and pipeline healing. Cases are persisted and remain after refresh.
         </p>

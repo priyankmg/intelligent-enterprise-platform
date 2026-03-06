@@ -25,8 +25,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/employees", label: "Employees" },
     { href: "/cases", label: "Cases" },
     { href: "/policies", label: "Policies" },
-    { href: "/tech-agents", label: "Tech agents" },
-    { href: "/governance", label: "Governance" },
+    { href: "/tech-agents", label: "Tech Agents" },
+    { href: "/governance", label: "Governance Agents" },
     { href: "/profile", label: "Profile" },
   ];
 
