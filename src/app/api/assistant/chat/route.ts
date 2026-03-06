@@ -74,7 +74,7 @@ async function runHealingSimulate(system: SystemName): Promise<{ message: string
       if (healing && "blocked" in healing && healing.blocked)
         return { message: "Governance blocked self-healing agent: " + healing.blockReason };
       return {
-        message: healing?.healed ? "API healing simulation ran: Leave API failure was detected and healed." : "API healing simulation ran: Leave API failure detected; case created.",
+        message: healing && !("blocked" in healing) && healing.healed ? "API healing simulation ran: Leave API failure was detected and healed." : "API healing simulation ran: Leave API failure detected; case created.",
         healed: healing && !("blocked" in healing) ? healing.healed : undefined,
       };
     }
@@ -86,7 +86,7 @@ async function runHealingSimulate(system: SystemName): Promise<{ message: string
     if (healing && "blocked" in healing && healing.blocked)
       return { message: "Governance blocked self-healing agent: " + healing.blockReason };
     return {
-      message: healing?.healed ? "API healing simulation ran: Policy API failure was detected and healed." : "API healing simulation ran: Policy API failure detected; case created.",
+      message: healing && !("blocked" in healing) && healing.healed ? "API healing simulation ran: Policy API failure was detected and healed." : "API healing simulation ran: Policy API failure detected; case created.",
       healed: healing && !("blocked" in healing) ? healing.healed : undefined,
     };
   }
