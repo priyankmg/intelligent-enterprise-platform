@@ -40,7 +40,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               href="/"
               className="text-base sm:text-lg font-semibold text-[var(--text)] hover:text-[var(--accent)] transition-colors shrink-0"
             >
-              Intelligent Enterprise Platform
+              Proteus — An Intelligent Enterprise Platform
             </Link>
 
             {/* Desktop nav */}

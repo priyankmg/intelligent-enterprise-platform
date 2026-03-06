@@ -136,7 +136,7 @@ export default function DashboardPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-sm text-[var(--muted)] mt-0.5">Intelligent Enterprise Platform</p>
+            <p className="text-sm text-[var(--muted)] mt-0.5">Proteus — An Intelligent Enterprise Platform</p>
           </div>
           {user && (
             <div className="text-sm text-[var(--muted)] bg-[var(--surface)] px-3 py-1.5 rounded-lg border border-[var(--border)]">
