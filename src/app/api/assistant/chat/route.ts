@@ -59,7 +59,9 @@ async function runHealingSimulate(system: SystemName): Promise<{ message: string
       if (healing && "blocked" in healing && healing.blocked)
         return { message: "Governance blocked self-healing agent: " + healing.blockReason };
       return {
-        message: healing?.healed ? "API healing simulation ran: ERP failure was detected and healed. Contract updated and retry succeeded." : "API healing simulation ran: ERP failure was detected; case created and may require attention.",
+        message: healing && !("blocked" in healing) && healing.healed
+          ? "API healing simulation ran: ERP failure was detected and healed. Contract updated and retry succeeded."
+          : "API healing simulation ran: ERP failure was detected; case created and may require attention.",
         healed: healing && !("blocked" in healing) ? healing.healed : undefined,
       };
     }
