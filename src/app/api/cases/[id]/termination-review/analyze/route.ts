@@ -4,6 +4,7 @@ import { getEmployeeSnapshot } from "@/services/data-aggregation";
 import { hrCases } from "@/data-layer/mock-data";
 import { runPolicyEvaluationAgent } from "@/agents/policy-evaluation-agent";
 import { runRetrievalAugmentationAgent } from "@/agents/retrieval-augmentation-agent";
+import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
 import OpenAI from "openai";
 
 const openai = process.env.OPENAI_API_KEY
@@ -43,12 +44,51 @@ export async function POST(
     appliedPolicyClauseId: policyEvaluation.appliedClauseId,
   });
 
-  // 3. Synthesize recommendation for HR (optional LLM or rule-based)
+  // 3. Governance check for termination synthesis
+  const synthesisCheck = governanceCheckBeforeAction({
+    agentId: "termination_synthesis",
+    actionClass: "recommendation",
+    dataScopesUsed: ["policy_evaluation", "similar_cases", "case"],
+    toolsUsed: ["readPolicyEvaluation", "readSimilarCases"],
+    policyIdsUsed: ["pol-termination"],
+    scope: { caseId: id, employeeId: c.employeeId },
+  });
+  if (!synthesisCheck.allowed) {
+    governanceRecordAfterAction({
+      agentId: "termination_synthesis",
+      actionClass: "recommendation",
+      riskLevel: "high",
+      scope: { caseId: id, employeeId: c.employeeId },
+      outcome: {},
+      blastRadius: [id, c.employeeId],
+      scopeAllowed: synthesisCheck.scopeEnforcerAllowed,
+      actionAllowed: synthesisCheck.actionClassifierAllowed,
+      blockReason: synthesisCheck.blockReason,
+    });
+    return NextResponse.json(
+      { error: "Governance blocked termination synthesis", blockReason: synthesisCheck.blockReason },
+      { status: 403 }
+    );
+  }
+
+  // 4. Synthesize recommendation for HR (optional LLM or rule-based)
   const recommendation = await synthesizeRecommendation({
     case: c,
     policyEvaluation,
     similarCases,
     openai,
+  });
+
+  governanceRecordAfterAction({
+    agentId: "termination_synthesis",
+    actionClass: "recommendation",
+    riskLevel: "high",
+    scope: { caseId: id, employeeId: c.employeeId },
+    outcome: { recommendation: recommendation.recommendation },
+    decision: recommendation.recommendation,
+    blastRadius: [id, c.employeeId],
+    scopeAllowed: true,
+    actionAllowed: true,
   });
 
   return NextResponse.json({

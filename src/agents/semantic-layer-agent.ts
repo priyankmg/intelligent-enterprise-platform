@@ -1,6 +1,7 @@
 import type { PolicyMetadata } from "@/data-layer/types";
 import { getPolicyMetadata } from "@/data-layer/policy-metadata";
 import OpenAI from "openai";
+import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
@@ -20,6 +21,16 @@ export interface SemanticLayerOutput {
 export async function runSemanticLayerAgent(
   policyId: string
 ): Promise<SemanticLayerOutput | null> {
+  const check = governanceCheckBeforeAction({
+    agentId: "semantic_layer",
+    actionClass: "read_data",
+    dataScopesUsed: ["policy_metadata", "policy_definitions"],
+    toolsUsed: ["getPolicyMetadata"],
+    policyIdsUsed: [policyId],
+    scope: { policyId },
+  });
+  if (!check.allowed) return null;
+
   const metadata = getPolicyMetadata(policyId);
   if (!metadata) return null;
 
@@ -34,13 +45,24 @@ export async function runSemanticLayerAgent(
     .join("\n");
 
   if (!openai) {
-    return {
+    const out = {
       policyId: metadata.policyId,
       policyName: metadata.policyName,
       metadata,
       inferenceGuidance: `Use definitions to interpret case and snapshot. Apply clauses in order: ${metadata.clauses.map((c) => c.id).join(", ")}.`,
       definitionsSummary,
     };
+    governanceRecordAfterAction({
+      agentId: "semantic_layer",
+      actionClass: "read_data",
+      riskLevel: "low",
+      scope: { policyId },
+      outcome: { policyName: out.policyName, clauseCount: metadata.clauses.length },
+      blastRadius: [policyId],
+      scopeAllowed: true,
+      actionAllowed: true,
+    });
+    return out;
   }
 
   try {
@@ -62,15 +84,36 @@ export async function runSemanticLayerAgent(
     const content = completion.choices[0]?.message?.content;
     if (!content) return null;
     const parsed = JSON.parse(content) as { inferenceGuidance?: string; definitionsSummary?: string };
-    return {
+    const out = {
       policyId: metadata.policyId,
       policyName: metadata.policyName,
       metadata,
       inferenceGuidance: parsed.inferenceGuidance ?? "Use metadata definitions and clause howToInferFromSnapshot.",
       definitionsSummary: parsed.definitionsSummary ?? definitionsSummary,
     };
+    governanceRecordAfterAction({
+      agentId: "semantic_layer",
+      actionClass: "read_data",
+      riskLevel: "low",
+      scope: { policyId },
+      outcome: { policyName: out.policyName, clauseCount: metadata.clauses.length },
+      blastRadius: [policyId],
+      scopeAllowed: true,
+      actionAllowed: true,
+    });
+    return out;
   } catch (err) {
     console.error("SemanticLayerAgent error:", err);
+    governanceRecordAfterAction({
+      agentId: "semantic_layer",
+      actionClass: "read_data",
+      riskLevel: "low",
+      scope: { policyId },
+      outcome: { error: String(err) },
+      blastRadius: [policyId],
+      scopeAllowed: true,
+      actionAllowed: true,
+    });
     return {
       policyId: metadata.policyId,
       policyName: metadata.policyName,

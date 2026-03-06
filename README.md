@@ -56,7 +56,24 @@ This platform includes **7 AI agents**, grouped into two planes:
 - **Database monitoring** — Monitors ERP datatable schemas for changes; updates impacted views and pipeline queries; notifies API healing (contract sync) and invokes the pipeline agent via the tech-stack MCP; monitors indexing performance and suggests caching or priority indexing.  
 - **Pipeline healing** — Invoked by the database monitoring agent (via tech-stack MCP) when a schema change affects reporting pipelines; updates pipeline queries to match the new schema.
 
-All agents are orchestrated or triggered from the abstraction and UX layers; tech-plane agents are managed under **Tech agents** in the UI (API healing, Database monitoring, Pipeline healing).
+All agents are orchestrated or triggered from the abstraction and UX layers. Tech-plane agents are managed under **Tech agents** in the UI (API healing, Database monitoring, Pipeline healing). Governance has its own top-level **Governance** menu.
+
+### Governance plane
+
+Five **governance plane** agents run in the background and monitor **scope**, **outcome**, **decision**, and **blast radius** of the 5 AI agents (Semantic Layer, Policy Evaluation, Termination synthesis, AI Assistant, Self-healing) and the 1 ML model (Career Trajectory). Enforcement is at the protocol level: every invocation is checked before execution and cannot be bypassed.
+
+| Governance agent | Role |
+|------------------|------|
+| **Action Classifier Agent** | Classifies every agent action (read_data, write_record, delete_record, invoke_tool, trigger_workflow, send_notification, recommendation) by risk profile. Enforces approval threshold per action class at onboarding; blocks high/critical risk when threshold is exceeded. **If an agent has delete operation it will require a human in the loop to approve.** The Governance UI shows each governed agent’s authorized action types (read/write/delete) and 7-day transaction counts per type. |
+| **Scope Enforcer Agent** | Least-privilege: each agent only has access to the tools and data it needs. Limits blast radius of failures or adversarial manipulation. |
+| **Anomaly Detection Agent** | Behavioral monitoring: unusual call frequency, data access outside normal pattern, or output distribution deviation. Flags model drift, prompt injection, or edge cases. |
+| **Policy Control Agent** | Single authoritative policy repository. When a business policy changes, ensures updates propagate to all affected agents (no policy drift). |
+| **Bias Correction Agent** | Monitors career trajectory and termination synthesis recommendations vs historical distribution. Flags abnormal decision-weight changes for human review. |
+
+- **Instrumentation:** Before any of the 6 run, `governanceCheckBeforeAction()` (Action Classifier + Scope Enforcer) is called; if blocked, the agent does not run. After execution, `governanceRecordAfterAction()` records scope, outcome, decision, blast radius.
+- **Background cycle:** Every 5 minutes (via `src/instrumentation.ts` in Node.js), `runGovernanceBackgroundCycle()` runs Anomaly Detection, Policy Control, and Bias Correction. Persisted to `data/governance-*.json`.
+- **UI:** **Governance** (top-level menu): Action Classifier summary (agents, authorized read/write/delete, 7-day transaction counts), recent events, anomalies, bias findings, policy versions; **Run governance cycle** triggers one cycle on demand.
+- **APIs:** `GET /api/internal/governance/status`, `POST /api/internal/governance/cycle` (same IAM as employee read).
 
 ### Models used by agents
 
@@ -82,8 +99,8 @@ This repo implements the above architecture with a **Next.js 15** app (TypeScrip
 
 - **Data layer:** `src/data-layer/` — types and mock data for all seven systems of record (Employee Master, Leave & Attendance, Disability & Accommodations, Performance & Feedback, HR Cases, Training, Policy Central) plus IAM user groups. Employee records include address and personal details (phone, DOB, nationality, marital status, emergency contact).
 - **Abstraction layer:** `src/abstraction-layer/iam.ts` — permission checks; `src/app/api/` — REST APIs for employees, leave, accommodations, performance, cases, training, policies, dashboard tasks, HR summary, career trajectory (`GET /api/employees/[id]/career-trajectory`), and assistant chat. All API routes enforce IAM.
-- **User experience:** Dashboard (my tasks, HR summary: present today / low leave / terminated), Employees list with filters, Employee profile (aggregated data per system, address and personal details, **Career trajectory** section with “View career trajectory recommendation” and a disclaimer that the outcome is data-driven but an AI prediction and does not use protected characteristics), My profile (employee self-service), Policy Central, Cases (investigations and termination reviews), **Tech agents** (API healing, Database monitoring, Pipeline healing), Profile. An **AI Assistant** chat (floating button) lets users ask employee counts, low leave balance, present today, terminated count, and trigger simulate API healing or database monitoring.
-- **Persistence:** Tech-agent cases (API healing, database monitoring, pipeline healing), failures, and tickets are stored under the `data/` directory as JSON files and persist across restarts and refresh.
+- **User experience:** Dashboard (my tasks, HR summary: present today / low leave / terminated), Employees list with filters, Employee profile (aggregated data per system, address and personal details, **Career trajectory** section with “View career trajectory recommendation” and a disclaimer that the outcome is data-driven but an AI prediction and does not use protected characteristics), My profile (employee self-service), Policy Central, Cases (investigations and termination reviews), **Tech agents** (API healing, Database monitoring, Pipeline healing), **Governance** (Action Classifier summary, events, anomalies, bias findings, policy versions, run cycle), Profile. An **AI Assistant** chat (floating button) lets users ask employee counts, low leave balance, present today, terminated count, and trigger simulate API healing or database monitoring.
+- **Persistence:** Tech-agent cases (API healing, database monitoring, pipeline healing), failures, and tickets are stored under the `data/` directory as JSON files and persist across restarts and refresh. Governance events, anomalies, bias findings, and policy versions are stored in `data/governance-events.json`, `data/governance-anomalies.json`, `data/governance-bias-findings.json`, and `data/governance-policy-versions.json`.
 
 **Commands:**
 

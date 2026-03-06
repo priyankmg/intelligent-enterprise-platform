@@ -13,6 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/cases", label: "Cases" },
     { href: "/policies", label: "Policies" },
     { href: "/tech-agents", label: "Tech agents" },
+    { href: "/governance", label: "Governance" },
     { href: "/profile", label: "Profile" },
   ];
 

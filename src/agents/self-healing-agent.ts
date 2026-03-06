@@ -3,6 +3,7 @@ import { getFailure, updateFailure } from "@/services/failure-store";
 import { createTicket } from "@/services/ticket-store";
 import { getContract, updateContract, setContractResponseSchema, setContractRequestSchema } from "@/data-layer/contracts";
 import { callErp, callLeave, callPolicy } from "@/data-layer/system-gateway";
+import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
 import OpenAI from "openai";
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
@@ -25,9 +26,34 @@ export interface HealingResult {
  * updates data contract and retries (up to MAX_ATTEMPTS). Creates ticket for
  * engineering (if not healed) or FYI (if healed).
  */
-export async function runSelfHealingAgent(failureId: string): Promise<HealingResult | null> {
+export type SelfHealingGovernanceBlocked = { blocked: true; blockReason: string };
+
+export async function runSelfHealingAgent(failureId: string): Promise<HealingResult | SelfHealingGovernanceBlocked | null> {
   const failure = getFailure(failureId);
   if (!failure) return null;
+
+  const check = governanceCheckBeforeAction({
+    agentId: "self_healing",
+    actionClass: "invoke_tool",
+    dataScopesUsed: ["failures", "contracts", "api_calls"],
+    toolsUsed: ["readFailure", "updateContract", "retryCall", "createTicket"],
+    policyIdsUsed: [],
+    scope: { failureId },
+  });
+  if (!check.allowed) {
+    governanceRecordAfterAction({
+      agentId: "self_healing",
+      actionClass: "invoke_tool",
+      riskLevel: "medium",
+      scope: { failureId },
+      outcome: {},
+      blastRadius: [failureId],
+      scopeAllowed: check.scopeEnforcerAllowed,
+      actionAllowed: check.actionClassifierAllowed,
+      blockReason: check.blockReason,
+    });
+    return { blocked: true, blockReason: check.blockReason ?? "Governance blocked" };
+  }
 
   const analysis = await analyzeFailure(failure);
   const attempts = failure.attempts || 0;
@@ -59,7 +85,7 @@ export async function runSelfHealingAgent(failureId: string): Promise<HealingRes
   });
   updateFailure(failureId, { ticketId: ticket.id });
 
-  return {
+  const result: HealingResult = {
     failureId,
     healed,
     attempts: failure.attempts + 1,
@@ -69,6 +95,18 @@ export async function runSelfHealingAgent(failureId: string): Promise<HealingRes
     fixesTried: fixesTried.join("; "),
     resolutionNote: ticket.resolutionNote,
   };
+  governanceRecordAfterAction({
+    agentId: "self_healing",
+    actionClass: "invoke_tool",
+    riskLevel: "medium",
+    scope: { failureId },
+    outcome: { healed: result.healed, ticketId: result.ticketId },
+    decision: result.healed ? "healed" : "ticket_created",
+    blastRadius: [failureId, result.ticketId],
+    scopeAllowed: true,
+    actionAllowed: true,
+  });
+  return result;
 }
 
 async function analyzeFailure(failure: ApiFailure): Promise<{ summary: string; suggestedResponseSchema?: unknown; suggestedRequestSchema?: unknown }> {

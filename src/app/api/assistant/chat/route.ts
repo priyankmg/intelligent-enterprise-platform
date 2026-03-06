@@ -3,6 +3,7 @@ import { getSessionUser, canAccess } from "@/abstraction-layer/iam";
 import { employees, attendanceToday, leaveBalances } from "@/data-layer/mock-data";
 import { setSimulateFailure, callErp, callLeave, callPolicy } from "@/data-layer/system-gateway";
 import { runSelfHealingAgent } from "@/agents/self-healing-agent";
+import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
 import { runDatabaseMonitoringAgent } from "@/agents/database-monitoring-agent";
 import { recordDbMonitoringCase } from "@/services/db-monitoring-cases-store";
 import { setLastResult } from "@/services/db-monitoring-result-store";
@@ -55,9 +56,11 @@ async function runHealingSimulate(system: SystemName): Promise<{ message: string
     const result = callErp("/employees", {});
     if (!result.ok) {
       const healing = await runSelfHealingAgent(result.failureId);
+      if (healing && "blocked" in healing && healing.blocked)
+        return { message: "Governance blocked self-healing agent: " + healing.blockReason };
       return {
         message: healing?.healed ? "API healing simulation ran: ERP failure was detected and healed. Contract updated and retry succeeded." : "API healing simulation ran: ERP failure was detected; case created and may require attention.",
-        healed: healing?.healed,
+        healed: healing && !("blocked" in healing) ? healing.healed : undefined,
       };
     }
     return { message: "Simulated ERP call succeeded this time; no failure was triggered." };
@@ -66,9 +69,11 @@ async function runHealingSimulate(system: SystemName): Promise<{ message: string
     const result = callLeave("/employees/emp-1/leave", { employeeId: "emp-1" });
     if (!result.ok) {
       const healing = await runSelfHealingAgent(result.failureId);
+      if (healing && "blocked" in healing && healing.blocked)
+        return { message: "Governance blocked self-healing agent: " + healing.blockReason };
       return {
         message: healing?.healed ? "API healing simulation ran: Leave API failure was detected and healed." : "API healing simulation ran: Leave API failure detected; case created.",
-        healed: healing?.healed,
+        healed: healing && !("blocked" in healing) ? healing.healed : undefined,
       };
     }
     return { message: "Simulated Leave call succeeded; no failure triggered." };
@@ -76,9 +81,11 @@ async function runHealingSimulate(system: SystemName): Promise<{ message: string
   const result = callPolicy("/policies");
   if (!result.ok) {
     const healing = await runSelfHealingAgent(result.failureId);
+    if (healing && "blocked" in healing && healing.blocked)
+      return { message: "Governance blocked self-healing agent: " + healing.blockReason };
     return {
       message: healing?.healed ? "API healing simulation ran: Policy API failure was detected and healed." : "API healing simulation ran: Policy API failure detected; case created.",
-      healed: healing?.healed,
+      healed: healing && !("blocked" in healing) ? healing.healed : undefined,
     };
   }
   return { message: "Simulated Policy call succeeded; no failure triggered." };
@@ -167,6 +174,45 @@ export async function POST(request: Request) {
 
     const { intent, system, schemaChange } = await detectIntentWithLLM(message);
 
+    const dataScopesUsed =
+      intent === "get_employee_count" || intent === "get_terminated_count"
+        ? ["employee_count"]
+        : intent === "get_low_leave_count"
+          ? ["leave_balance"]
+          : intent === "get_present_today_count"
+            ? ["attendance"]
+            : intent === "simulate_healing"
+              ? ["failures", "tickets"]
+              : intent === "simulate_database_monitoring"
+                ? ["failures", "tickets"]
+                : [];
+    const toolsUsed =
+      intent === "simulate_healing" ? ["simulateHealing"] : intent === "simulate_database_monitoring" ? ["simulateDatabaseMonitoring"] : ["queryDashboard"];
+    const check = governanceCheckBeforeAction({
+      agentId: "ai_assistant",
+      actionClass: intent === "simulate_healing" ? "trigger_workflow" : "read_data",
+      dataScopesUsed: dataScopesUsed.length ? dataScopesUsed : ["employee_count", "leave_balance", "attendance", "terminated_list", "failures", "tickets"],
+      toolsUsed,
+      policyIdsUsed: [],
+      scope: { intent, messageLength: message.length },
+    });
+    if (!check.allowed) {
+      governanceRecordAfterAction({
+        agentId: "ai_assistant",
+        actionClass: "read_data",
+        riskLevel: "low",
+        scope: { intent },
+        outcome: {},
+        blastRadius: ["session"],
+        scopeAllowed: check.scopeEnforcerAllowed,
+        actionAllowed: check.actionClassifierAllowed,
+        blockReason: check.blockReason,
+      });
+      return NextResponse.json({
+        reply: "This action was not allowed by governance. " + (check.blockReason ?? ""),
+      });
+    }
+
     const bold = (x: number | string) => "**" + String(x) + "**";
     let reply: string;
 
@@ -210,6 +256,17 @@ export async function POST(request: Request) {
       }
     }
 
+    governanceRecordAfterAction({
+      agentId: "ai_assistant",
+      actionClass: intent === "simulate_healing" ? "trigger_workflow" : "read_data",
+      riskLevel: "low",
+      scope: { intent, messageLength: message.length },
+      outcome: { replyLength: reply.length, intent },
+      decision: intent,
+      blastRadius: ["session"],
+      scopeAllowed: true,
+      actionAllowed: true,
+    });
     return NextResponse.json({ reply });
   } catch (e) {
     console.error("Assistant chat error:", e);

@@ -4,6 +4,7 @@ import type { HRCase } from "@/data-layer/types";
 import type { SemanticLayerOutput } from "./semantic-layer-agent";
 import { runSemanticLayerAgent } from "./semantic-layer-agent";
 import OpenAI from "openai";
+import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
@@ -22,6 +23,29 @@ export async function runPolicyEvaluationAgent(
   input: PolicyEvaluationAgentInput
 ): Promise<{ evaluation: PolicyEvaluationResult; semanticLayer: SemanticLayerOutput | null }> {
   const policyId = input.policyId ?? "pol-termination";
+  const check = governanceCheckBeforeAction({
+    agentId: "policy_evaluation",
+    actionClass: "recommendation",
+    dataScopesUsed: ["policy_metadata", "employee_snapshot", "case"],
+    toolsUsed: ["readPolicy", "readSnapshot", "readCase"],
+    policyIdsUsed: [policyId],
+    scope: { caseId: input.case.id, employeeId: input.case.employeeId, policyId },
+  });
+  if (!check.allowed) {
+    governanceRecordAfterAction({
+      agentId: "policy_evaluation",
+      actionClass: "recommendation",
+      riskLevel: "medium",
+      scope: { caseId: input.case.id, employeeId: input.case.employeeId, policyId },
+      outcome: {},
+      blastRadius: [input.case.id, input.case.employeeId],
+      scopeAllowed: check.scopeEnforcerAllowed,
+      actionAllowed: check.actionClassifierAllowed,
+      blockReason: check.blockReason,
+    });
+    return mockPolicyEvaluation(input, null);
+  }
+
   const semanticLayer = await runSemanticLayerAgent(policyId);
 
   const caseNotesText = (input.case.caseNotes ?? [])
@@ -44,7 +68,19 @@ export async function runPolicyEvaluationAgent(
     : "";
 
   if (!openai) {
-    return mockPolicyEvaluation(input, semanticLayer);
+    const result = mockPolicyEvaluation(input, semanticLayer);
+    governanceRecordAfterAction({
+      agentId: "policy_evaluation",
+      actionClass: "recommendation",
+      riskLevel: "medium",
+      scope: { caseId: input.case.id, employeeId: input.case.employeeId, policyId },
+      outcome: { appliedClauseId: result.evaluation.appliedClauseId, violated: result.evaluation.violated },
+      decision: result.evaluation.violated ? "violation" : "no_violation",
+      blastRadius: [input.case.id, input.case.employeeId],
+      scopeAllowed: true,
+      actionAllowed: true,
+    });
+    return result;
   }
 
   try {
@@ -90,16 +126,36 @@ Output JSON:
     const content = completion.choices[0]?.message?.content;
     if (!content) return mockPolicyEvaluation(input, semanticLayer);
     const parsed = JSON.parse(content) as PolicyEvaluationResult;
-    return {
-      evaluation: {
-        ...parsed,
-        semanticLayerSummary: semanticLayer?.inferenceGuidance,
-      },
+    const result = {
+      evaluation: { ...parsed, semanticLayerSummary: semanticLayer?.inferenceGuidance },
       semanticLayer: semanticLayer ?? null,
     };
+    governanceRecordAfterAction({
+      agentId: "policy_evaluation",
+      actionClass: "recommendation",
+      riskLevel: "medium",
+      scope: { caseId: input.case.id, employeeId: input.case.employeeId, policyId },
+      outcome: { appliedClauseId: result.evaluation.appliedClauseId, violated: result.evaluation.violated },
+      decision: result.evaluation.violated ? "violation" : "no_violation",
+      blastRadius: [input.case.id, input.case.employeeId],
+      scopeAllowed: true,
+      actionAllowed: true,
+    });
+    return result;
   } catch (err) {
     console.error("PolicyEvaluationAgent error:", err);
-    return mockPolicyEvaluation(input, semanticLayer);
+    const result = mockPolicyEvaluation(input, semanticLayer);
+    governanceRecordAfterAction({
+      agentId: "policy_evaluation",
+      actionClass: "recommendation",
+      riskLevel: "medium",
+      scope: { caseId: input.case.id, employeeId: input.case.employeeId, policyId },
+      outcome: { error: String(err) },
+      blastRadius: [input.case.id, input.case.employeeId],
+      scopeAllowed: true,
+      actionAllowed: true,
+    });
+    return result;
   }
 }
 

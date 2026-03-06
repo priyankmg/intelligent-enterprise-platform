@@ -409,3 +409,100 @@ export interface CareerTrajectoryResult {
   factorItems: CareerTrajectoryFactor[];
   snapshot: CareerSnapshot;
 }
+
+// --- Governance Plane: monitored agents and action taxonomy ---
+
+export type GovernedAgentId =
+  | "semantic_layer"
+  | "policy_evaluation"
+  | "termination_synthesis"
+  | "ai_assistant"
+  | "self_healing"
+  | "career_trajectory";
+
+/** Action class for governance: every agent action is classified by risk. */
+export type ActionClass =
+  | "read_data"
+  | "write_record"
+  | "delete_record"
+  | "invoke_tool"
+  | "trigger_workflow"
+  | "send_notification"
+  | "recommendation";
+
+/** Risk profile for action classes; used by Action Classifier Agent. */
+export type ActionRiskLevel = "low" | "medium" | "high" | "critical";
+
+export interface ActionClassPolicy {
+  actionClass: ActionClass;
+  riskLevel: ActionRiskLevel;
+  /** Require explicit approval for risk >= this (e.g. "high" = block high/critical until approved). */
+  approvalThreshold: ActionRiskLevel;
+  autoApproveBelow: boolean;
+}
+
+/** Single governed invocation: recorded for all 6 agents/ML. */
+export interface GovernanceEvent {
+  id: string;
+  agentId: GovernedAgentId;
+  timestamp: string;
+  /** Action class assigned by Action Classifier. */
+  actionClass: ActionClass;
+  riskLevel: ActionRiskLevel;
+  /** Scope: what data/tools were requested (e.g. employeeId, caseId, policyId). */
+  scope: Record<string, unknown>;
+  /** Outcome summary after execution (e.g. recommendation, trend). */
+  outcome: Record<string, unknown>;
+  /** Decision made by the agent (e.g. recommend_termination, growth). */
+  decision?: string;
+  /** Blast radius: who/what is affected (e.g. employee IDs, case IDs, systems). */
+  blastRadius: string[];
+  /** Whether Scope Enforcer allowed this invocation. */
+  scopeAllowed: boolean;
+  /** Whether Action Classifier allowed this invocation. */
+  actionAllowed: boolean;
+  /** If blocked, reason. */
+  blockReason?: string;
+}
+
+/** Per-agent scope (least privilege): allowed APIs, data scopes. */
+export interface AgentScopePolicy {
+  agentId: GovernedAgentId;
+  allowedDataScopes: string[];
+  allowedTools: string[];
+  allowedPolicyIds: string[];
+}
+
+/** Anomaly finding from Anomaly Detection Agent. */
+export interface GovernanceAnomaly {
+  id: string;
+  agentId: GovernedAgentId;
+  timestamp: string;
+  type: "call_frequency" | "access_pattern" | "output_distribution";
+  description: string;
+  severity: "low" | "medium" | "high";
+  metric?: number;
+  baseline?: number;
+  acknowledged: boolean;
+}
+
+/** Policy version entry for Policy Control Agent. */
+export interface PolicyVersionRecord {
+  policyId: string;
+  version: string;
+  updatedAt: string;
+  affectedAgents: GovernedAgentId[];
+  propagatedAt?: string;
+}
+
+/** Bias finding from Bias Correction Agent (e.g. career trajectory drift). */
+export interface GovernanceBiasFinding {
+  id: string;
+  source: "career_trajectory" | "termination_synthesis" | "policy_evaluation";
+  timestamp: string;
+  description: string;
+  metric?: number;
+  baseline?: number;
+  severity: "low" | "medium" | "high";
+  acknowledged: boolean;
+}
