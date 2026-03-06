@@ -84,7 +84,7 @@ export function AssistantChat() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-lg hover:bg-[var(--accent-hover)] transition-colors"
+        className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-lg hover:bg-[var(--accent-hover)] transition-colors"
         aria-label="Open AI assistant"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -93,7 +93,7 @@ export function AssistantChat() {
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex w-[380px] max-w-[calc(100vw-3rem)] flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl">
+        <div className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 flex w-[calc(100vw-2rem)] sm:w-[380px] max-w-[420px] flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl">
           <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
             <h3 className="font-semibold text-[var(--text)]">AI Assistant</h3>
             <button
