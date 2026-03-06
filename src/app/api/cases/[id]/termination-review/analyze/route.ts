@@ -5,10 +5,10 @@ import { hrCases } from "@/data-layer/mock-data";
 import { runPolicyEvaluationAgent } from "@/agents/policy-evaluation-agent";
 import { runRetrievalAugmentationAgent } from "@/agents/retrieval-augmentation-agent";
 import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
 /**
@@ -76,7 +76,7 @@ export async function POST(
     case: c,
     policyEvaluation,
     similarCases,
-    openai,
+    anthropic,
   });
 
   governanceRecordAfterAction({
@@ -118,19 +118,19 @@ async function synthesizeRecommendation(params: {
   case: { subject: string; initialFinding?: string };
   policyEvaluation: { violated: boolean; evidence: string[] };
   similarCases: { terminationReason: string }[];
-  openai: OpenAI | null;
+  anthropic: Anthropic | null;
 }): Promise<{
   recommendation: "recommend_termination" | "recommend_warning" | "insufficient_evidence";
   summary: string;
   mitigatingFactors: string[];
 }> {
-  const { policyEvaluation, similarCases, openai } = params;
+  const { policyEvaluation, similarCases, anthropic } = params;
   const defaultMitigating = [
     "Consider performance history and prior violations",
     "Employee statement and cooperation",
   ];
 
-  if (!openai) {
+  if (!anthropic) {
     return {
       recommendation: policyEvaluation.violated ? "recommend_termination" : "insufficient_evidence",
       summary:
@@ -142,22 +142,19 @@ async function synthesizeRecommendation(params: {
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 512,
+      system:
+        "You synthesize a brief HR recommendation from policy evaluation result and similar cases. Return only valid JSON, no markdown or explanation. Output JSON: recommendation (recommend_termination | recommend_warning | insufficient_evidence), summary (2-3 sentences), mitigatingFactors (string array).",
       messages: [
-        {
-          role: "system",
-          content:
-            "You synthesize a brief HR recommendation from policy evaluation result and similar cases. Output valid JSON only: recommendation (recommend_termination | recommend_warning | insufficient_evidence), summary (2-3 sentences), mitigatingFactors (string array).",
-        },
         {
           role: "user",
           content: `Violated: ${policyEvaluation.violated}. Evidence: ${JSON.stringify(policyEvaluation.evidence)}. Similar cases: ${similarCases.map((s) => s.terminationReason).join("; ")}.`,
         },
       ],
-      response_format: { type: "json_object" },
     });
-    const content = completion.choices[0]?.message?.content;
+    const content = response.content[0].type === "text" ? response.content[0].text : null;
     if (!content) throw new Error("No content");
     const parsed = JSON.parse(content) as {
       recommendation?: string;

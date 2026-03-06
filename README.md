@@ -79,17 +79,17 @@ Five **governance plane** agents run in the background and monitor **scope**, **
 
 | Agent | Model / approach |
 |-------|------------------|
-| **Semantic Layer Agent** | **OpenAI `gpt-4o-mini`** — policy metadata lookup (when `OPENAI_API_KEY` is set; otherwise mock). |
-| **Policy Evaluation Agent** | **OpenAI `gpt-4o-mini`** — evaluates snapshot and case against termination policy (otherwise mock). |
-| **Termination review synthesis** | **OpenAI `gpt-4o-mini`** — combines policy evaluation and similar cases into the final recommendation (otherwise mock). |
+| **Semantic Layer Agent** | **Anthropic `claude-sonnet-4-6`** — policy metadata lookup (when `ANTHROPIC_API_KEY` is set; otherwise mock). |
+| **Policy Evaluation Agent** | **Anthropic `claude-sonnet-4-6`** — evaluates snapshot and case against termination policy (otherwise mock). |
+| **Termination review synthesis** | **Anthropic `claude-sonnet-4-6`** — combines policy evaluation and similar cases into the final recommendation (otherwise mock). |
 | **Retrieval Augmentation Agent** | **No LLM** — rule/data-based: uses the cases retrieval service to fetch past cases by applied policy clause. |
 | **Career Trajectory Agent** | **k-NN (no LLM)** — deterministic: k=5 nearest neighbors (Manhattan distance) over growth/termination reference snapshots; majority vote for trend. |
-| **Self-healing (API healing) Agent** | **OpenAI `gpt-4o-mini`** — infers contract changes and proposes fixes (otherwise mock). |
+| **Self-healing (API healing) Agent** | **Anthropic `claude-sonnet-4-6`** — infers contract changes and proposes fixes (otherwise mock). |
 | **Database Monitoring Agent** | **No LLM** — compares ERP schema to last known state and updates views/pipelines. |
 | **Pipeline Agent** | **No LLM** — updates pipeline queries when invoked by DB monitoring. |
-| **AI Assistant (chat)** | **OpenAI `gpt-4o-mini`** — intent classification and reply generation (otherwise keyword-based intent and mock replies). |
+| **AI Assistant (chat)** | **Anthropic `claude-sonnet-4-6`** — intent classification and reply generation (otherwise keyword-based intent and mock replies). |
 
-**Summary:** LLM-based agents use **OpenAI `gpt-4o-mini`** (set `OPENAI_API_KEY` in `.env` for live calls). The Career Trajectory, Retrieval Augmentation, Database Monitoring, and Pipeline agents are deterministic or rule-based and do not call an LLM.
+**Summary:** LLM-based agents use **Anthropic `claude-sonnet-4-6`** (set `ANTHROPIC_API_KEY` in `.env.local` for live calls). The Career Trajectory, Retrieval Augmentation, Database Monitoring, and Pipeline agents are deterministic or rule-based and do not call an LLM.
 
 ---
 
@@ -127,7 +127,7 @@ If you see "This page isn't working" or HTTP 404, make sure you are opening the 
 5. **Synthesis**: The analyze API combines policy evaluation + similar cases into a single recommendation (terminate / warning / insufficient evidence), summary, evidence, and mitigating factors for HR.
 6. **HR decision**: HR reviews the recommendation, policy evaluation, similar cases, and employee snapshot, then submits formal termination with reason and rehire consequence.
 
-**AI:** Set `OPENAI_API_KEY` in `.env` for live GPT in Semantic Layer, Policy Evaluation, and synthesis. When unset, mock results are returned.
+**AI:** Set `ANTHROPIC_API_KEY` in `.env.local` for live Claude Sonnet in Semantic Layer, Policy Evaluation, Termination Synthesis, Self-healing, and AI Assistant. When unset, mock results are returned.
 
 ### Career trajectory classifier
 

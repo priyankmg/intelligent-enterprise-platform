@@ -9,9 +9,9 @@ import { recordDbMonitoringCase } from "@/services/db-monitoring-cases-store";
 import { setLastResult } from "@/services/db-monitoring-result-store";
 import { getCurrentSchema } from "@/services/schema-store";
 import type { SystemName, TableColumnDef } from "@/data-layer/types";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
 type Intent =
   | "get_employee_count"
@@ -136,20 +136,17 @@ function detectIntentWithKeywords(message: string): { intent: Intent; system?: S
 }
 
 async function detectIntentWithLLM(message: string): Promise<{ intent: Intent; system?: SystemName; schemaChange?: boolean }> {
-  if (!openai) return detectIntentWithKeywords(message);
+  if (!anthropic) return detectIntentWithKeywords(message);
   try {
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const res = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 256,
+      system: `You are an intent classifier for an HR platform assistant. Reply with a single JSON object only, no markdown. Keys: intent (one of: get_employee_count, get_low_leave_count, get_present_today_count, get_terminated_count, simulate_healing, simulate_database_monitoring, general), system (only if intent is simulate_healing: one of erp, leave, policy), schemaChange (only if intent is simulate_database_monitoring: boolean).`,
       messages: [
-        {
-          role: "system",
-          content: `You are an intent classifier for an HR platform assistant. Reply with a single JSON object only, no markdown. Keys: intent (one of: get_employee_count, get_low_leave_count, get_present_today_count, get_terminated_count, simulate_healing, simulate_database_monitoring, general), system (only if intent is simulate_healing: one of erp, leave, policy), schemaChange (only if intent is simulate_database_monitoring: boolean).`,
-        },
         { role: "user", content: message },
       ],
-      response_format: { type: "json_object" },
     });
-    const text = res.choices[0]?.message?.content;
+    const text = res.content[0].type === "text" ? res.content[0].text : null;
     if (!text) return detectIntentWithKeywords(message);
     const parsed = JSON.parse(text) as { intent?: string; system?: string; schemaChange?: boolean };
     const intent = (parsed.intent ?? "general") as Intent;
@@ -235,19 +232,17 @@ export async function POST(request: Request) {
     } else if (intent === "simulate_database_monitoring") {
       reply = await runDbMonitoringSimulate(schemaChange ?? false);
     } else {
-      if (openai) {
+      if (anthropic) {
         try {
-          const res = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+          const res = await anthropic.messages.create({
+            model: "claude-sonnet-4-6",
+            max_tokens: 512,
+            system: "You are a helpful HR platform assistant. The platform has: employee data, leave balances, attendance, termination cases, API healing (ERP/Leave/Policy), and database monitoring. You can tell users they can ask: how many employees, how many have low leave balance, present today, terminated last month, or to simulate API healing or database monitoring. Keep replies concise.",
             messages: [
-              {
-                role: "system",
-                content: "You are a helpful HR platform assistant. The platform has: employee data, leave balances, attendance, termination cases, API healing (ERP/Leave/Policy), and database monitoring. You can tell users they can ask: how many employees, how many have low leave balance, present today, terminated last month, or to simulate API healing or database monitoring. Keep replies concise.",
-              },
               { role: "user", content: message },
             ],
           });
-          reply = res.choices[0]?.message?.content ?? "I didn't understand. You can ask how many employees are in the database, how many have low leave balance, or ask to simulate API healing or database monitoring.";
+          reply = (res.content[0].type === "text" ? res.content[0].text : null) ?? "I didn't understand. You can ask how many employees are in the database, how many have low leave balance, or ask to simulate API healing or database monitoring.";
         } catch {
           reply = "You can ask: **How many employees are in the database?** | **How many employees have a low leave balance?** | **How many are present today?** | **Simulate API healing** (ERP, Leave, or Policy) | **Simulate database monitoring** (optionally with schema change).";
         }

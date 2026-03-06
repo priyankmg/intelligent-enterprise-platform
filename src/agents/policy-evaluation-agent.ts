@@ -3,10 +3,10 @@ import type { EmployeeSnapshot } from "@/data-layer/types";
 import type { HRCase } from "@/data-layer/types";
 import type { SemanticLayerOutput } from "./semantic-layer-agent";
 import { runSemanticLayerAgent } from "./semantic-layer-agent";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
 export interface PolicyEvaluationAgentInput {
   case: HRCase;
@@ -67,7 +67,7 @@ export async function runPolicyEvaluationAgent(
     ? `SEMANTIC LAYER (use this to infer correctly):\n${semanticLayer.inferenceGuidance}\nDefinitions: ${semanticLayer.definitionsSummary}\nApplicable clause IDs: ${semanticLayer.metadata.clauses.map((c) => c.id).join(", ")}`
     : "";
 
-  if (!openai) {
+  if (!anthropic) {
     const result = mockPolicyEvaluation(input, semanticLayer);
     governanceRecordAfterAction({
       agentId: "policy_evaluation",
@@ -84,14 +84,12 @@ export async function runPolicyEvaluationAgent(
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await anthropic!.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      system:
+        "You are an HR policy evaluation agent. You MUST use the Semantic Layer guidance to interpret the policy correctly. Determine which single policy clause best applies and whether the employee violated it. Return only valid JSON, no markdown or explanation.",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are an HR policy evaluation agent. You MUST use the Semantic Layer guidance to interpret the policy correctly. Determine which single policy clause best applies and whether the employee violated it. Output valid JSON only.",
-        },
         {
           role: "user",
           content: `${semanticGuidance}
@@ -121,9 +119,8 @@ Output JSON:
 - semanticLayerSummary: string (one line)`,
         },
       ],
-      response_format: { type: "json_object" },
     });
-    const content = completion.choices[0]?.message?.content;
+    const content = response.content[0].type === "text" ? response.content[0].text : null;
     if (!content) return mockPolicyEvaluation(input, semanticLayer);
     const parsed = JSON.parse(content) as PolicyEvaluationResult;
     const result = {

@@ -4,9 +4,9 @@ import { createTicket } from "@/services/ticket-store";
 import { getContract, updateContract, setContractResponseSchema, setContractRequestSchema } from "@/data-layer/contracts";
 import { callErp, callLeave, callPolicy } from "@/data-layer/system-gateway";
 import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
 const MAX_ATTEMPTS = 3;
 
@@ -120,24 +120,21 @@ async function analyzeFailure(failure: ApiFailure): Promise<{ summary: string; s
     expectedRequestSchema: contract.requestSchema,
   };
 
-  if (!openai) {
+  if (!anthropic) {
     return mockAnalyze(failure);
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      system:
+        "You analyze API integration failures. Identify what changed in the payload: new/renamed/removed fields, or what the system now expects. Return only valid JSON, no markdown or explanation. Output JSON: summary (2-3 sentences), suggestedResponseSchema (if response_contract_changed: JSON Schema that matches the new response), suggestedRequestSchema (if request_rejected: schema for request that system expects).",
       messages: [
-        {
-          role: "system",
-          content:
-            "You analyze API integration failures. Identify what changed in the payload: new/renamed/removed fields, or what the system now expects. Output JSON: summary (2-3 sentences), suggestedResponseSchema (if response_contract_changed: JSON Schema that matches the new response), suggestedRequestSchema (if request_rejected: schema for request that system expects).",
-        },
         { role: "user", content: JSON.stringify(payload, null, 2) },
       ],
-      response_format: { type: "json_object" },
     });
-    const content = completion.choices[0]?.message?.content;
+    const content = response.content[0].type === "text" ? response.content[0].text : null;
     if (!content) return mockAnalyze(failure);
     return JSON.parse(content) as { summary: string; suggestedResponseSchema?: unknown; suggestedRequestSchema?: unknown };
   } catch (err) {

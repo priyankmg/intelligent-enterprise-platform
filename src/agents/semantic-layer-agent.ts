@@ -1,9 +1,9 @@
 import type { PolicyMetadata } from "@/data-layer/types";
 import { getPolicyMetadata } from "@/data-layer/policy-metadata";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { governanceCheckBeforeAction, governanceRecordAfterAction } from "@/services/governance-orchestrator";
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
 export interface SemanticLayerOutput {
   policyId: string;
@@ -44,7 +44,7 @@ export async function runSemanticLayerAgent(
     )
     .join("\n");
 
-  if (!openai) {
+  if (!anthropic) {
     const out = {
       policyId: metadata.policyId,
       policyName: metadata.policyName,
@@ -66,22 +66,19 @@ export async function runSemanticLayerAgent(
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await anthropic!.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 512,
+      system:
+        "You are a policy semantic layer. Given policy metadata (definitions and clauses), produce a short inference guidance so another agent can correctly infer whether an employee violated the policy. Return only valid JSON, no markdown or explanation.",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a policy semantic layer. Given policy metadata (definitions and clauses), produce a short inference guidance so another agent can correctly infer whether an employee violated the policy. Output valid JSON only.",
-        },
         {
           role: "user",
           content: `Policy: ${metadata.policyName}\nDefinitions:\n${definitionsSummary}\n\nClauses:\n${clausesSummary}\n\nProduce a JSON object with: inferenceGuidance (2-3 sentences for correct inference), definitionsSummary (brief).`,
         },
       ],
-      response_format: { type: "json_object" },
     });
-    const content = completion.choices[0]?.message?.content;
+    const content = response.content[0].type === "text" ? response.content[0].text : null;
     if (!content) return null;
     const parsed = JSON.parse(content) as { inferenceGuidance?: string; definitionsSummary?: string };
     const out = {
