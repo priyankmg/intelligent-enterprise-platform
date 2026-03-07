@@ -1,4 +1,4 @@
-# intelligent-enterprise-platform
+# Proteus - An intelligent-enterprise-platform
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -44,7 +44,8 @@ The employee facing UX allows employee to see their data - all their history fro
 This platform includes **7 AI agents**, grouped into two planes:
 
 **Business plane (3 agents)**  
-- **Semantic Layer Agent** — Supplies policy metadata (definitions, clause semantics, inference rules) so the Policy Evaluation Agent interprets policies correctly. Used in the termination investigation workflow.  
+- **Semantic Layer Agent** — Supplies policy metadata (definitions, clause semantics, inference rules) so the Policy Evaluation Agent interprets policies correctly. Used in the termination investigation workflow.
+  
 - **Policy Evaluation Agent** — Evaluates employee snapshot and case against the termination policy; outputs applied clause and violation result.  
 - **Retrieval Augmentation Agent** — Uses the applied policy clause to retrieve past similar termination cases and ground the recommendation.
 
@@ -53,7 +54,9 @@ This platform includes **7 AI agents**, grouped into two planes:
 
 **Tech plane (3 agents)**  
 - **API healing** — Monitors API calls to systems of record; when payload or response contract changes, analyzes the failure, updates the data contract, retries, and creates engineering or FYI tickets.  
+
 - **Database monitoring** — Monitors ERP datatable schemas for changes; updates impacted views and pipeline queries; notifies API healing (contract sync) and invokes the pipeline agent via the tech-stack MCP; monitors indexing performance and suggests caching or priority indexing.  
+
 - **Pipeline healing** — Invoked by the database monitoring agent (via tech-stack MCP) when a schema change affects reporting pipelines; updates pipeline queries to match the new schema.
 
 All agents are orchestrated or triggered from the abstraction and UX layers. Tech-plane agents are managed under **Tech agents** in the UI (API healing, Database monitoring, Pipeline healing). Governance has its own top-level **Governance** menu.
@@ -69,6 +72,9 @@ Five **governance plane** agents run in the background and monitor **scope**, **
 | **Anomaly Detection Agent** | Behavioral monitoring: unusual call frequency, data access outside normal pattern, or output distribution deviation. Flags model drift, prompt injection, or edge cases. |
 | **Policy Control Agent** | Single authoritative policy repository. When a business policy changes, ensures updates propagate to all affected agents (no policy drift). |
 | **Bias Correction Agent** | Monitors career trajectory and termination synthesis recommendations vs historical distribution. Flags abnormal decision-weight changes for human review. |
+
+
+
 
 - **Instrumentation:** Before any of the 6 run, `governanceCheckBeforeAction()` (Action Classifier + Scope Enforcer) is called; if blocked, the agent does not run. After execution, `governanceRecordAfterAction()` records scope, outcome, decision, blast radius.
 - **Background cycle:** Every 5 minutes (via `src/instrumentation.ts` in Node.js), `runGovernanceBackgroundCycle()` runs Anomaly Detection, Policy Control, and Bias Correction. Persisted to `data/governance-*.json`.
