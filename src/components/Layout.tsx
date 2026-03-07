@@ -108,17 +108,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Site footer */}
       <footer className="border-t border-[var(--border)] bg-[var(--bg-subtle)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-[var(--muted)]">
-            Built by{" "}
-            <a
-              href="https://www.linkedin.com/in/priyankmohan"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
-            >
-              Priyank Mohan
-            </a>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col items-center gap-2 text-center">
+          <p className="text-sm text-[var(--muted)]">
+            Built by <span className="font-medium text-[var(--text-secondary)]">Priyank Mohan</span>
             {"  ·  "}
             <a
               href="https://www.linkedin.com/in/priyankmohan"
@@ -147,7 +139,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               Read the Architecture Article
             </a>
           </p>
-          <p className="text-xs text-[var(--muted)]">MIT License © 2026</p>
+          <p className="text-sm text-[var(--muted)]">MIT License © 2026</p>
         </div>
       </footer>
 
