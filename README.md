@@ -43,21 +43,25 @@ The employee facing UX allows employee to see their data - all their history fro
 
 This platform includes **7 AI agents**, grouped into two planes:
 
-**Business plane (3 agents)**  
-- **Semantic Layer Agent** — Supplies policy metadata (definitions, clause semantics, inference rules) so the Policy Evaluation Agent interprets policies correctly. Used in the termination investigation workflow.
-  
-- **Policy Evaluation Agent** — Evaluates employee snapshot and case against the termination policy; outputs applied clause and violation result.  
-- **Retrieval Augmentation Agent** — Uses the applied policy clause to retrieve past similar termination cases and ground the recommendation.
+**Business plane (3 agents)**
 
-**Career trajectory classifier**  
-- **Career Trajectory Agent** — Predicts whether an employee is trending toward growth (promotion, high performance) or termination risk. Uses a k-NN classifier over job-relevant snapshots (tenure, leave balance, performance ratings, HR cases, training completion, level). **The model explicitly does not use protected characteristics** such as age, gender, race, ethnicity, sexual orientation, religion, disability status, marital status, or nationality. Only performance-related and job-relevant signals are included in the snapshot and prediction. See [Career trajectory classifier](#career-trajectory-classifier) below.
+- **Semantic Layer Agent** `Anthropic claude-sonnet-4-6` — Supplies policy metadata (definitions, clause semantics, inference rules) so the Policy Evaluation Agent interprets policies correctly. Used in the termination investigation workflow.
 
-**Tech plane (3 agents)**  
-- **API healing** — Monitors API calls to systems of record; when payload or response contract changes, analyzes the failure, updates the data contract, retries, and creates engineering or FYI tickets.  
+- **Policy Evaluation Agent** `Anthropic claude-sonnet-4-6` — Evaluates employee snapshot and case against the termination policy; outputs applied clause and violation result.
 
-- **Database monitoring** — Monitors ERP datatable schemas for changes; updates impacted views and pipeline queries; notifies API healing (contract sync) and invokes the pipeline agent via the tech-stack MCP; monitors indexing performance and suggests caching or priority indexing.  
+- **Retrieval Augmentation Agent** `No LLM — rule/data-based` — Uses the applied policy clause to retrieve past similar termination cases and ground the recommendation.
 
-- **Pipeline healing** — Invoked by the database monitoring agent (via tech-stack MCP) when a schema change affects reporting pipelines; updates pipeline queries to match the new schema.
+**Career trajectory classifier**
+
+- **Career Trajectory Agent** `k-NN classifier — no LLM` — Predicts whether an employee is trending toward growth (promotion, high performance) or termination risk. Uses a k-NN classifier (k=5, Manhattan distance) over job-relevant snapshots (tenure, leave balance, performance ratings, HR cases, training completion, level). **The model explicitly does not use protected characteristics** such as age, gender, race, ethnicity, sexual orientation, religion, disability status, marital status, or nationality. Only performance-related and job-relevant signals are included in the snapshot and prediction. See [Career trajectory classifier](#career-trajectory-classifier) below.
+
+**Tech plane (3 agents)**
+
+- **API healing (Self-Healing Agent)** `Anthropic claude-sonnet-4-6` — Monitors API calls to systems of record; when payload or response contract changes, analyzes the failure, updates the data contract, retries, and creates engineering or FYI tickets.
+
+- **Database monitoring** `No LLM — deterministic` — Monitors ERP datatable schemas for changes; updates impacted views and pipeline queries; notifies API healing (contract sync) and invokes the pipeline agent via the tech-stack MCP; monitors indexing performance and suggests caching or priority indexing.
+
+- **Pipeline healing** `No LLM — deterministic` — Invoked by the database monitoring agent (via tech-stack MCP) when a schema change affects reporting pipelines; updates pipeline queries to match the new schema.
 
 All agents are orchestrated or triggered from the abstraction and UX layers. Tech-plane agents are managed under **Tech agents** in the UI (API healing, Database monitoring, Pipeline healing). Governance has its own top-level **Governance** menu.
 
@@ -186,4 +190,4 @@ the agent:
 
 ### AI Assistant
 
-- **Chat** (floating button on every page): `POST /api/assistant/chat` with `{ message }`. Intent detection (keyword or OpenAI) for: employee count, low leave balance, present today, terminated count, simulate API healing (ERP/Leave/Policy), simulate database monitoring. Replies are plain text with optional bold markers for the UI.
+- **Chat** `Anthropic claude-sonnet-4-6` (floating button on every page): `POST /api/assistant/chat` with `{ message }`. Intent detection (keyword or Anthropic claude-sonnet-4-6) for: employee count, low leave balance, present today, terminated count, simulate API healing (ERP/Leave/Policy), simulate database monitoring. Replies are plain text with optional bold markers for the UI.
