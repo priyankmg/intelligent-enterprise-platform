@@ -105,6 +105,52 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       <FeedbackFooter />
+
+      {/* Site footer */}
+      <footer className="border-t border-[var(--border)] bg-[var(--bg-subtle)]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-[var(--muted)]">
+            Built by{" "}
+            <a
+              href="https://www.linkedin.com/in/priyankmohan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
+            >
+              Priyank Mohan
+            </a>
+            {"  ·  "}
+            <a
+              href="https://www.linkedin.com/in/priyankmohan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+            >
+              LinkedIn
+            </a>
+            {"  ·  "}
+            <a
+              href="https://github.com/priyankmg/intelligent-enterprise-platform"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+            >
+              GitHub
+            </a>
+            {"  ·  "}
+            <a
+              href="https://medium.com/@mg.priyank/building-an-intelligent-enterprise-platform-0d0dde61ba2a"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+            >
+              Read the Architecture Article
+            </a>
+          </p>
+          <p className="text-xs text-[var(--muted)]">MIT License © 2026</p>
+        </div>
+      </footer>
+
       <AssistantChat />
     </div>
   );
