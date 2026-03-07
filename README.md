@@ -1,7 +1,7 @@
 # Proteus - An intelligent-enterprise-platform
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-
+![Proteus Dashboard](public/screenshots/dashboard.png)
 
 A governed multi-agent AI platform for enterprise HR — featuring policy evaluation, career trajectory prediction, self-healing infrastructure agents, and self-governance agents. 
 
