@@ -136,7 +136,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               rel="noopener noreferrer"
               className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
             >
-              Read the Architecture Article
+              Original Article
             </a>
           </p>
           <p className="text-sm text-[var(--muted)]">MIT License © 2026</p>
